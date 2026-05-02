@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.wayapp.ui.screens.OnboardingScreen
+import com.example.wayapp.ui.navigation.AppNavigation
 import com.example.wayapp.ui.theme.WAYAPPTheme
 
 class MainActivity : ComponentActivity() {
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WAYAPPTheme {
-                OnboardingScreen()
+                AppNavigation()
             }
         }
     }

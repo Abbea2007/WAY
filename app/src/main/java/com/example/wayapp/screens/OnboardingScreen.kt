@@ -76,8 +76,8 @@ fun OnboardingScreen(
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFFCEC3F5),
-                        Color(0xFFCDC6EA),
+                        Color(0xFFD5CAF6),
+                        Color(0xFFD0CBE5),
                         Color(0xFFFFFFFF)
                     ),
                     start = Offset(0f, 0f),
@@ -98,7 +98,7 @@ fun OnboardingScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(310.dp),
+                    .height(270.dp),
                 contentScale = ContentScale.Fit
             )
 
