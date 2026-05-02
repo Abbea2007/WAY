@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +37,10 @@ import com.example.wayapp.R
 fun AuthScreen(
     onLoginSuccess: () -> Unit = {}
 ) {
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var isLogin by remember { mutableStateOf(true) }
 
     Box(
@@ -77,6 +83,8 @@ fun AuthScreen(
 
             if (!isLogin) {
                 AuthInput(
+                    value = fullName,
+                    onValueChange = { fullName = it },
                     placeholder = "Nombre completo",
                     icon = { Icon(Icons.Outlined.Person, contentDescription = null) }
                 )
@@ -85,6 +93,8 @@ fun AuthScreen(
             }
 
             AuthInput(
+                value = email,
+                onValueChange = { email = it },
                 placeholder = "Correo electrónico",
                 icon = { Icon(Icons.Outlined.Email, contentDescription = null) }
             )
@@ -92,6 +102,8 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             AuthInput(
+                value = password,
+                onValueChange = { password = it },
                 placeholder = "Contraseña",
                 isPassword = true,
                 icon = { Icon(Icons.Outlined.Lock, contentDescription = null) }
@@ -101,6 +113,8 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AuthInput(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
                     placeholder = "Confirmar contraseña",
                     isPassword = true,
                     icon = { Icon(Icons.Outlined.Lock, contentDescription = null) }
@@ -226,51 +240,51 @@ fun AuthSwitchItem(
 
 @Composable
 fun AuthInput(
+    value: String,
+    onValueChange: (String) -> Unit,
     placeholder: String,
     isPassword: Boolean = false,
     icon: @Composable () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(WayWhite)
-            .border(
-                width = 1.dp,
-                color = WayBorder,
-                shape = RoundedCornerShape(14.dp)
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = WayTextMuted,
+                fontSize = 15.sp
             )
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(22.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        },
+        leadingIcon = {
             CompositionLocalProvider(LocalContentColor provides WayTextMuted) {
                 icon()
             }
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Text(
-            text = placeholder,
-            color = WayTextMuted,
-            fontSize = 15.sp,
-            modifier = Modifier.weight(1f)
+        },
+        trailingIcon = {
+            if (isPassword) {
+                Icon(
+                    imageVector = Icons.Outlined.Visibility,
+                    contentDescription = null,
+                    tint = WayTextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        },
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = WayPurple,
+            unfocusedBorderColor = WayBorder,
+            focusedContainerColor = WayWhite,
+            unfocusedContainerColor = WayWhite,
+            cursorColor = WayPurple
         )
-
-        if (isPassword) {
-            Icon(
-                imageVector = Icons.Outlined.Visibility,
-                contentDescription = null,
-                tint = WayTextMuted,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
+    )
 }
 
 @Composable

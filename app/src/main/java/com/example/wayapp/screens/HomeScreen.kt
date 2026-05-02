@@ -1,10 +1,14 @@
 package com.example.wayapp.ui.screens
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +16,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocationOn
@@ -22,9 +29,14 @@ import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
+import kotlinx.coroutines.selects.select
 
 data class LostItem(
     val title: String,
@@ -48,6 +61,10 @@ data class LostItem(
     @DrawableRes val image: Int
 )
 
+enum class BottomNavItem {
+    Home, Search, Notifications, Profile
+}
+
 @Composable
 fun HomeScreen() {
     val items = listOf(
@@ -57,6 +74,8 @@ fun HomeScreen() {
         LostItem("Termo para café", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle20),
         LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
     )
+
+    var selectedItem by remember {mutableStateOf(BottomNavItem.Home)}
 
     Box(
         modifier = Modifier
@@ -94,6 +113,8 @@ fun HomeScreen() {
         }
 
         HomeBottomBar(
+            selectedItem = selectedItem,
+            onItemSelected = { selectedItem = it },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -348,8 +369,18 @@ fun ObjectCard(item: LostItem) {
 
 @Composable
 fun HomeBottomBar(
+    selectedItem: BottomNavItem,
+    onItemSelected: (BottomNavItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val plusInteractionSource = remember { MutableInteractionSource() }
+    val plusPressed by plusInteractionSource.collectIsPressedAsState()
+
+    val plusScale by animateFloatAsState(
+        targetValue = if (plusPressed) 0.92f else 1f,
+        label = "plus_button_scale"
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -365,13 +396,35 @@ fun HomeBottomBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavItem("Home", Icons.Filled.Home, active = true)
-            NavItem("Buscar", Icons.Outlined.Search, active = false)
+            NavItem(
+                label = "Home",
+                icon = Icons.Filled.Home,
+                active = selectedItem == BottomNavItem.Home,
+                onClick = { onItemSelected(BottomNavItem.Home) }
+            )
+
+            NavItem(
+                label = "Buscar",
+                icon = Icons.Filled.Search,
+                active = selectedItem == BottomNavItem.Search,
+                onClick = { onItemSelected(BottomNavItem.Search) }
+            )
 
             Spacer(modifier = Modifier.width(76.dp))
 
-            NavItem("Notificaciones", Icons.Outlined.Notifications, active = false)
-            NavItem("Perfil", Icons.Outlined.Person, active = false)
+            NavItem(
+                label = "Notificaciones",
+                icon = Icons.Filled.Notifications,
+                active = selectedItem == BottomNavItem.Notifications,
+                onClick = { onItemSelected(BottomNavItem.Notifications) }
+            )
+
+            NavItem(
+                label = "Perfil",
+                icon = Icons.Filled.Person,
+                active = selectedItem == BottomNavItem.Profile,
+                onClick = { onItemSelected(BottomNavItem.Profile) }
+            )
         }
 
         Box(
@@ -379,6 +432,7 @@ fun HomeBottomBar(
                 .size(64.dp)
                 .align(Alignment.Center)
                 .offset(y = (-8).dp)
+                .scale(plusScale)
                 .shadow(
                     elevation = 18.dp,
                     shape = CircleShape,
@@ -386,12 +440,22 @@ fun HomeBottomBar(
                     spotColor = WayPurple.copy(alpha = 0.35f)
                 )
                 .clip(CircleShape)
-                .background(WayPurple),
+                .background(WayPurple)
+                .clickable(
+                    interactionSource = plusInteractionSource,
+                    indication = ripple(
+                        bounded = true,
+                        color = WayWhite.copy(alpha = 0.25f)
+                    ),
+                    onClick = {
+                        // Aquí luego navegamos a publicar
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Rounded.Add,
-                contentDescription = null,
+                contentDescription = "Publicar",
                 tint = WayWhite,
                 modifier = Modifier.size(32.dp)
             )
@@ -403,12 +467,31 @@ fun HomeBottomBar(
 fun NavItem(
     label: String,
     icon: ImageVector,
-    active: Boolean
+    active: Boolean,
+    onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        label = "nav_item_scale"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = Modifier.width(68.dp)
+        modifier = Modifier
+            .width(68.dp)
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(
+                    bounded = false,
+                    color = WayPurple.copy(alpha = 0.16f)
+                ),
+                onClick = onClick
+            )
     ) {
         Icon(
             imageVector = icon,
