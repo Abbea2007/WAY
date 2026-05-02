@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -76,6 +77,7 @@ fun HomeScreen() {
     )
 
     var selectedItem by remember {mutableStateOf(BottomNavItem.Home)}
+    var searchText by remember {mutableStateOf("")}
 
     Box(
         modifier = Modifier
@@ -91,7 +93,10 @@ fun HomeScreen() {
             HomeHeader()
 
             Spacer(modifier = Modifier.height(18.dp))
-            HomeSearchBar()
+            HomeSearchBar(
+                value = searchText,
+                onValueChange = { searchText = it }
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
             HomeTabs()
@@ -141,47 +146,57 @@ fun HomeHeader() {
 }
 
 @Composable
-fun HomeSearchBar() {
+fun HomeSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = TextStyle(
+                color = WayTextPrimary,
+                fontSize = 13.sp
+            ),
+            placeholder = {
+                Text(
+                    text = "Buscar objetos, categorías, lugares...",
+                    color = WayTextMuted,
+                    fontSize = 13.sp,
+                    maxLines = 1
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = null,
+                    tint = WayTextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp)
+                .height(52.dp)
                 .shadow(
                     elevation = 6.dp,
                     shape = RoundedCornerShape(14.dp),
                     ambientColor = Color.Black.copy(alpha = 0.08f),
                     spotColor = Color.Black.copy(alpha = 0.08f)
-                )
-                .clip(RoundedCornerShape(14.dp))
-                .background(WayWhite)
-                .border(
-                    BorderStroke(1.dp, WayBorder),
-                    RoundedCornerShape(14.dp)
-                )
-                .padding(horizontal = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Search,
-                contentDescription = null,
-                tint = WayTextMuted,
-                modifier = Modifier.size(20.dp)
+                ),
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = WayPurple,
+                unfocusedBorderColor = WayBorder,
+                focusedContainerColor = WayWhite,
+                unfocusedContainerColor = WayWhite,
+                cursorColor = WayPurple
             )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Text(
-                text = "Buscar objetos, categorías, lugares...",
-                color = WayTextMuted,
-                fontSize = 13.sp,
-                maxLines = 1
-            )
-        }
+        )
 
         Box(
             modifier = Modifier
@@ -202,7 +217,7 @@ fun HomeSearchBar() {
         ) {
             Icon(
                 imageVector = Icons.Outlined.Tune,
-                contentDescription = null,
+                contentDescription = "Filtros",
                 tint = WayPurple,
                 modifier = Modifier.size(22.dp)
             )

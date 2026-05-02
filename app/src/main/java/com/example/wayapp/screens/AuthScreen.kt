@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -246,6 +247,8 @@ fun AuthInput(
     isPassword: Boolean = false,
     icon: @Composable () -> Unit
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -264,15 +267,28 @@ fun AuthInput(
         },
         trailingIcon = {
             if (isPassword) {
-                Icon(
-                    imageVector = Icons.Outlined.Visibility,
-                    contentDescription = null,
-                    tint = WayTextMuted,
-                    modifier = Modifier.size(20.dp)
-                )
+                IconButton(
+                    onClick = { passwordVisible = !passwordVisible }
+                ) {
+                    Icon(
+                        imageVector = if (passwordVisible)
+                            Icons.Outlined.VisibilityOff
+                        else
+                            Icons.Outlined.Visibility,
+                        contentDescription = if (passwordVisible)
+                            "Ocultar contraseña"
+                        else
+                            "Mostrar contraseña",
+                        tint = WayTextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         },
-        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation = if (isPassword && !passwordVisible)
+            PasswordVisualTransformation()
+        else
+            VisualTransformation.None,
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
