@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -33,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
-
 data class OnboardingPage(
     @DrawableRes val image: Int,
     val titleBlack: String,
@@ -74,34 +74,35 @@ fun OnboardingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
+                brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0x1A8B5CF6),
-                        Color.White
+                        Color(0xFFCEC3F5),
+                        Color(0xFFCDC6EA),
+                        Color(0xFFFFFFFF)
                     ),
-
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, 1900f)
                 )
             )
             .padding(horizontal = 28.dp, vertical = 32.dp)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(110.dp))
+            Spacer(modifier = Modifier.height(70.dp))
 
             Image(
                 painter = painterResource(id = page.image),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp),
+                    .height(310.dp),
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             Text(
                 text = buildAnnotatedString {
@@ -213,8 +214,8 @@ fun DotsIndicator(
                     .size(8.dp)
                     .clip(CircleShape)
                     .background(
-                        if (index == selectedIndex) WayPurple
-                        else WayBorder
+                        if (index <= selectedIndex) WayPurple
+                        else Color(0xFFD9D9D9)
                     )
             )
         }
