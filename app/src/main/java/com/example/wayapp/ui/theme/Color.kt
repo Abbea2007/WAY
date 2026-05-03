@@ -33,3 +33,15 @@ val WayPurpleGradientStart = Color(0xFF6C4DF6)
 val WayPurpleGradientEnd = Color(0xFF8B5CF6)
 
 val PurpleGradient = Color(0x1A8B5CF6)
+
+//Modo Dark
+
+val WayDarkBackground = Color(0xFF0D1017)
+val WayDarkSurface = Color(0xFF171B22)
+val WayDarkCard = Color(0xFF1A1F27)
+
+val WayDarkTextPrimary = Color(0xFFF9FAFB)
+val WayDarkTextSecondary = Color(0xFFC7CDD8)
+val WayDarkTextMuted = Color(0xFF9CA3AF)
+
+val WayDarkBorder = Color(0xFF252B35)

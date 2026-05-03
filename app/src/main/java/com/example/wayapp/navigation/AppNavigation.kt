@@ -7,9 +7,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.wayapp.ui.screens.AuthScreen
 import com.example.wayapp.ui.screens.HomeScreen
 import com.example.wayapp.ui.screens.OnboardingScreen
+import com.example.wayapp.ui.theme.ThemeMode
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit
+) {
     val navController = rememberNavController()
 
     NavHost(
@@ -37,7 +41,10 @@ fun AppNavigation() {
         }
 
         composable("home") {
-            HomeScreen()
+            HomeScreen(
+                themeMode = themeMode,
+                onThemeChange = onThemeChange
+            )
         }
     }
 }

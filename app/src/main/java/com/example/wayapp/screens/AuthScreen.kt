@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -253,6 +254,10 @@ fun AuthInput(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
+        textStyle = TextStyle(
+            color = WayTextPrimary,
+            fontSize = 13.sp)
+        ,
         placeholder = {
             Text(
                 text = placeholder,

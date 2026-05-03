@@ -17,13 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Add
@@ -51,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
-import kotlinx.coroutines.selects.select
 
 data class LostItem(
     val title: String,
@@ -63,11 +60,14 @@ data class LostItem(
 )
 
 enum class BottomNavItem {
-    Home, Search, Notifications, Profile
+    Home, Search, Notifications, Settings
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit
+) {
     val items = listOf(
         LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17),
         LostItem("Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18),
@@ -76,13 +76,14 @@ fun HomeScreen() {
         LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
     )
 
-    var selectedItem by remember {mutableStateOf(BottomNavItem.Home)}
-    var searchText by remember {mutableStateOf("")}
+    var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
+    var searchText by remember { mutableStateOf("") }
+    val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WayBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -90,29 +91,65 @@ fun HomeScreen() {
                 .padding(horizontal = 24.dp)
                 .padding(top = 72.dp, bottom = 104.dp)
         ) {
-            HomeHeader()
+            when (selectedItem) {
+                BottomNavItem.Home -> {
+                    HomeHeader(isDarkMode = isDarkMode)
 
-            Spacer(modifier = Modifier.height(18.dp))
-            HomeSearchBar(
-                value = searchText,
-                onValueChange = { searchText = it }
-            )
+                    Spacer(modifier = Modifier.height(18.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
-            HomeTabs()
+                    HomeSearchBar(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        isDarkMode = isDarkMode
+                    )
 
-            Spacer(modifier = Modifier.height(24.dp))
-            SectionHeader()
+                    Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    HomeTabs(isDarkMode = isDarkMode)
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(items) { item ->
-                    ObjectCard(item = item)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    SectionHeader()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(items) { item ->
+                            ObjectCard(
+                                item = item,
+                                isDarkMode = isDarkMode
+                            )
+                        }
+                    }
+                }
+
+                BottomNavItem.Settings -> {
+                    SettingsScreen(
+                        selectedTheme = themeMode,
+                        onThemeChange = onThemeChange
+                    )
+                }
+
+                BottomNavItem.Search -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Pantalla Buscar", color = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+
+                BottomNavItem.Notifications -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Notificaciones", color = MaterialTheme.colorScheme.onBackground)
+                    }
                 }
             }
         }
@@ -126,29 +163,71 @@ fun HomeScreen() {
 }
 
 @Composable
-fun HomeHeader() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+fun HomeHeader(
+    onProfileClick: () -> Unit = {},
+    isDarkMode: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "Hola, Abea 👋",
-            color = WayTextPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Hola, Abea 👋",
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        Text(
-            text = "¿Qué estás buscando hoy?",
-            color = WayTextSecondary,
-            fontSize = 14.sp
-        )
+            Text(
+                text = "¿Qué estás buscando hoy?",
+                color = WayTextSecondary,
+                fontSize = 14.sp
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { onProfileClick() }
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.profile_photo),
+                contentDescription = "Perfil",
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .border(
+                        width = 2.dp,
+                        color = if (isDarkMode)
+                            MaterialTheme.colorScheme.outline
+                        else
+                            WayWhite,
+                        shape = CircleShape
+                    ),
+
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
 @Composable
 fun HomeSearchBar(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    isDarkMode: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -160,7 +239,7 @@ fun HomeSearchBar(
             onValueChange = onValueChange,
             singleLine = true,
             textStyle = TextStyle(
-                color = WayTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp
             ),
             placeholder = {
@@ -191,9 +270,13 @@ fun HomeSearchBar(
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = WayPurple,
-                unfocusedBorderColor = WayBorder,
-                focusedContainerColor = WayWhite,
-                unfocusedContainerColor = WayWhite,
+                unfocusedBorderColor = if (isDarkMode) {
+                    MaterialTheme.colorScheme.outline
+                } else {
+                    WayBorder
+                },
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 cursorColor = WayPurple
             )
         )
@@ -208,10 +291,14 @@ fun HomeSearchBar(
                     spotColor = Color.Black.copy(alpha = 0.08f)
                 )
                 .clip(RoundedCornerShape(14.dp))
-                .background(WayWhite)
+                .background(MaterialTheme.colorScheme.surface)
                 .border(
-                    BorderStroke(1.dp, WayBorder),
-                    RoundedCornerShape(14.dp)
+                    width = 1.dp,
+                    color = if (isDarkMode)
+                        MaterialTheme.colorScheme.outline
+                    else
+                        WayBorder,
+                    shape = RoundedCornerShape(14.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -226,13 +313,22 @@ fun HomeSearchBar(
 }
 
 @Composable
-fun HomeTabs() {
+fun HomeTabs(isDarkMode: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (isDarkMode) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                } else Modifier
+            )
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -257,7 +353,7 @@ fun TabPill(
     ) {
         Text(
             text = text,
-            color = if (active) WayWhite else WayTextPrimary,
+            color = if (active) WayWhite else MaterialTheme.colorScheme.onSurface,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
         )
@@ -273,7 +369,7 @@ fun SectionHeader() {
     ) {
         Text(
             text = "Publicaciones Recientes",
-            color = WayTextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
@@ -288,7 +384,10 @@ fun SectionHeader() {
 }
 
 @Composable
-fun ObjectCard(item: LostItem) {
+fun ObjectCard(
+    item: LostItem,
+    isDarkMode: Boolean
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -300,7 +399,16 @@ fun ObjectCard(item: LostItem) {
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(16.dp))
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (isDarkMode) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                } else Modifier
+            )
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -321,7 +429,7 @@ fun ObjectCard(item: LostItem) {
         ) {
             Text(
                 text = item.title,
-                color = WayTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
@@ -357,7 +465,7 @@ fun ObjectCard(item: LostItem) {
                 Icon(
                     imageVector = Icons.Outlined.LocationOn,
                     contentDescription = null,
-                    tint = WayTextPrimary,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(15.dp)
                 )
 
@@ -376,7 +484,7 @@ fun ObjectCard(item: LostItem) {
         Icon(
             imageVector = Icons.Outlined.BookmarkBorder,
             contentDescription = null,
-            tint = WayTextPrimary,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )
     }
@@ -400,7 +508,12 @@ fun HomeBottomBar(
         modifier = modifier
             .fillMaxWidth()
             .height(104.dp)
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .shadow(
+                elevation = 8.dp,
+                ambientColor = Color.Black.copy(alpha = 0.1f),
+                spotColor = Color.Black.copy(alpha = 0.1f)
+            )
             .padding(horizontal = 22.dp)
             .padding(bottom = 18.dp)
     ) {
@@ -435,10 +548,10 @@ fun HomeBottomBar(
             )
 
             NavItem(
-                label = "Perfil",
-                icon = Icons.Filled.Person,
-                active = selectedItem == BottomNavItem.Profile,
-                onClick = { onItemSelected(BottomNavItem.Profile) }
+                label = "Configuración",
+                icon = Icons.Filled.Settings,
+                active = selectedItem == BottomNavItem.Settings,
+                onClick = { onItemSelected(BottomNavItem.Settings) }
             )
         }
 
@@ -446,7 +559,7 @@ fun HomeBottomBar(
             modifier = Modifier
                 .size(64.dp)
                 .align(Alignment.Center)
-                .offset(y = (-8).dp)
+                .offset(y = (-5).dp)
                 .scale(plusScale)
                 .shadow(
                     elevation = 18.dp,
@@ -497,7 +610,7 @@ fun NavItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
         modifier = Modifier
-            .width(68.dp)
+            .width(67.dp)
             .scale(scale)
             .clickable(
                 interactionSource = interactionSource,
@@ -518,7 +631,7 @@ fun NavItem(
         Text(
             text = label,
             color = if (active) WayPurple else WayTextMuted,
-            fontSize = 10.sp,
+            fontSize = 9.sp,
             maxLines = 1
         )
     }
