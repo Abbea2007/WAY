@@ -1,5 +1,6 @@
 package com.example.wayapp.ui.screens
 
+import android.widget.Toast // IMPORTANTE AGREGAR ESTO
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext // IMPORTANTE AGREGAR ESTO
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.ui.theme.*
 import com.example.wayapp.R
+import com.example.wayapp.auth.AuthManager // IMPORTAMOS TU BACKEND
 
 @Composable
 fun AuthScreen(
@@ -44,6 +47,12 @@ fun AuthScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isLogin by remember { mutableStateOf(true) }
+
+    // 1. INSTANCIAMOS TU BACKEND AQUÍ
+    val authManager = remember { AuthManager() }
+
+    // 2. OBTENEMOS EL CONTEXTO PARA MOSTRAR MENSAJES (TOASTS)
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -136,9 +145,38 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // 3. AQUÍ CONECTAMOS EL BOTÓN CON TU LÓGICA DE FIREBASE
             PrimaryAuthButton(
                 text = if (isLogin) "Iniciar Sesión" else "Crear Cuenta",
-                onClick = onLoginSuccess
+                onClick = {
+                    if (isLogin) {
+                        // LÓGICA DE INICIO DE SESIÓN
+                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                            authManager.iniciarSesion(email, password) { exitoso, mensaje ->
+                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                                if (exitoso) {
+                                    onLoginSuccess() // Navega al HomePage si funcionó
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        // LÓGICA DE REGISTRO
+                        if (email.isNotEmpty() && password.isNotEmpty() && password == confirmPassword) {
+                            authManager.registrarUsuario(email, password) { exitoso, mensaje ->
+                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                                if (exitoso) {
+                                    isLogin = true // Si se registra bien, lo pasamos a la pantalla de login
+                                }
+                            }
+                        } else if (password != confirmPassword) {
+                            Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))

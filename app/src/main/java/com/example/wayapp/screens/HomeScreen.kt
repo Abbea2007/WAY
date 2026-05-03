@@ -49,6 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.example.wayapp.data.FirestoreManager
+import com.example.wayapp.model.ObjetoReportado
 
 data class LostItem(
     val title: String,
@@ -68,6 +72,10 @@ fun HomeScreen(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit
 ) {
+    // 1. INSTANCIAMOS EL BACKEND Y EL CONTEXTO
+    val firestoreManager = remember { FirestoreManager() }
+    val context = LocalContext.current
+
     val items = listOf(
         LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17),
         LostItem("Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18),
@@ -154,9 +162,26 @@ fun HomeScreen(
             }
         }
 
+        // 2. MODIFICAMOS LA BARRA INFERIOR PARA MANDAR EL OBJETO
         HomeBottomBar(
             selectedItem = selectedItem,
             onItemSelected = { selectedItem = it },
+            onAddClick = {
+                // Creamos un objeto de prueba
+                val objetoPrueba = ObjetoReportado(
+                    titulo = "Termo Stanley Verde",
+                    descripcion = "Lo dejé olvidado en la mesa de la cafetería.",
+                    estado = "PERDIDO",
+                    ubicacionGeneral = "Cafetería UAM",
+                    fechaHora = "Hoy, 1:50 p.m.",
+                    idUsuarioReporta = "usuario_demo_123"
+                )
+
+                // Lo mandamos a la nube
+                firestoreManager.agregarObjeto(objetoPrueba) { exito, mensaje ->
+                    Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                }
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -494,6 +519,7 @@ fun ObjectCard(
 fun HomeBottomBar(
     selectedItem: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
+    onAddClick: () -> Unit = {}, // <-- 1. AGREGAMOS ESTE PARÁMETRO
     modifier: Modifier = Modifier
 ) {
     val plusInteractionSource = remember { MutableInteractionSource() }
@@ -524,35 +550,11 @@ fun HomeBottomBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavItem(
-                label = "Home",
-                icon = Icons.Filled.Home,
-                active = selectedItem == BottomNavItem.Home,
-                onClick = { onItemSelected(BottomNavItem.Home) }
-            )
-
-            NavItem(
-                label = "Buscar",
-                icon = Icons.Filled.Search,
-                active = selectedItem == BottomNavItem.Search,
-                onClick = { onItemSelected(BottomNavItem.Search) }
-            )
-
+            NavItem(label = "Home", icon = Icons.Filled.Home, active = selectedItem == BottomNavItem.Home, onClick = { onItemSelected(BottomNavItem.Home) })
+            NavItem(label = "Buscar", icon = Icons.Filled.Search, active = selectedItem == BottomNavItem.Search, onClick = { onItemSelected(BottomNavItem.Search) })
             Spacer(modifier = Modifier.width(76.dp))
-
-            NavItem(
-                label = "Notificaciones",
-                icon = Icons.Filled.Notifications,
-                active = selectedItem == BottomNavItem.Notifications,
-                onClick = { onItemSelected(BottomNavItem.Notifications) }
-            )
-
-            NavItem(
-                label = "Configuración",
-                icon = Icons.Filled.Settings,
-                active = selectedItem == BottomNavItem.Settings,
-                onClick = { onItemSelected(BottomNavItem.Settings) }
-            )
+            NavItem(label = "Notificaciones", icon = Icons.Filled.Notifications, active = selectedItem == BottomNavItem.Notifications, onClick = { onItemSelected(BottomNavItem.Notifications) })
+            NavItem(label = "Configuración", icon = Icons.Filled.Settings, active = selectedItem == BottomNavItem.Settings, onClick = { onItemSelected(BottomNavItem.Settings) })
         }
 
         Box(
@@ -576,7 +578,7 @@ fun HomeBottomBar(
                         color = WayWhite.copy(alpha = 0.25f)
                     ),
                     onClick = {
-                        // Aquí luego navegamos a publicar
+                        onAddClick() // <-- 2. EJECUTAMOS LA ACCIÓN AQUÍ
                     }
                 ),
             contentAlignment = Alignment.Center
