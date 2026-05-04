@@ -64,7 +64,7 @@ data class LostItem(
 )
 
 enum class BottomNavItem {
-    Home, Search, Notifications, Settings
+    Home, Search, Notifications, Settings, Publish
 }
 
 @Composable
@@ -135,6 +135,12 @@ fun HomeScreen(
                     }
                 }
 
+                BottomNavItem.Publish -> {
+                    PublishScreen(
+                        onBack ={selectedItem = BottomNavItem.Home}
+                    )
+                }
+
                 BottomNavItem.Settings -> {
                     SettingsScreen(
                         selectedTheme = themeMode,
@@ -166,22 +172,6 @@ fun HomeScreen(
         HomeBottomBar(
             selectedItem = selectedItem,
             onItemSelected = { selectedItem = it },
-            onAddClick = {
-                // Creamos un objeto de prueba
-                val objetoPrueba = ObjetoReportado(
-                    titulo = "Termo Stanley Verde",
-                    descripcion = "Lo dejé olvidado en la mesa de la cafetería.",
-                    estado = "PERDIDO",
-                    ubicacionGeneral = "Cafetería UAM",
-                    fechaHora = "Hoy, 1:50 p.m.",
-                    idUsuarioReporta = "usuario_demo_123"
-                )
-
-                // Lo mandamos a la nube
-                firestoreManager.agregarObjeto(objetoPrueba) { exito, mensaje ->
-                    Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
-                }
-            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
@@ -578,7 +568,7 @@ fun HomeBottomBar(
                         color = WayWhite.copy(alpha = 0.25f)
                     ),
                     onClick = {
-                        onAddClick() // <-- 2. EJECUTAMOS LA ACCIÓN AQUÍ
+                        onItemSelected(BottomNavItem.Publish) // <-- 2. EJECUTAMOS LA ACCIÓN AQUÍ
                     }
                 ),
             contentAlignment = Alignment.Center
