@@ -97,7 +97,8 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
-                .padding(top = 72.dp, bottom = 104.dp)
+                .padding(top = 72.dp,
+                    bottom = if (selectedItem == BottomNavItem.Publish) 24.dp else 104.dp)
         ) {
             when (selectedItem) {
                 BottomNavItem.Home -> {
@@ -137,7 +138,7 @@ fun HomeScreen(
 
                 BottomNavItem.Publish -> {
                     PublishScreen(
-                        onBack ={selectedItem = BottomNavItem.Home}
+                        onBack = { selectedItem = BottomNavItem.Home }
                     )
                 }
 
@@ -168,12 +169,16 @@ fun HomeScreen(
             }
         }
 
+
+
         // 2. MODIFICAMOS LA BARRA INFERIOR PARA MANDAR EL OBJETO
-        HomeBottomBar(
-            selectedItem = selectedItem,
-            onItemSelected = { selectedItem = it },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        if (selectedItem != BottomNavItem.Publish) {
+            HomeBottomBar(
+                selectedItem = selectedItem,
+                onItemSelected = { selectedItem = it },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
 
