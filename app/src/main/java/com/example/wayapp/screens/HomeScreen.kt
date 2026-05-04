@@ -231,7 +231,7 @@ fun HomeHeader(
             Icon(
                 imageVector = Icons.Outlined.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(24.dp)
             )
         }
