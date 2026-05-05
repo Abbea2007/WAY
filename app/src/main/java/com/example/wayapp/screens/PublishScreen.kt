@@ -31,23 +31,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
+import com.example.wayapp.data.FirestoreManager
+import com.example.wayapp.model.ObjetoReportado
 import com.example.wayapp.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 enum class PublishType {
     Lost, Found
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublishScreen(
     onBack: () -> Unit = {}
 ) {
+    // Instancia de FirestoreManager
+    val firestoreManager = remember { FirestoreManager() }
+
     var selectedType by remember { mutableStateOf(PublishType.Lost) }
 
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var place by remember { mutableStateOf("") }
-    var dateTime by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+
+    // Variables para Fecha y Hora
+    var date by remember { mutableStateOf("") }
+    var time by remember { mutableStateOf("") }
+
+    // Estados para mostrar los diálogos
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
 
@@ -66,7 +82,7 @@ fun PublishScreen(
         ) {
             PublishTypeCard(
                 title = "Pérdido",
-                image = R.drawable.lost_backpack,
+                image = R.drawable.lost_backpack, // Asegúrate de que el nombre coincide con tus recursos
                 selected = selectedType == PublishType.Lost,
                 isDarkMode = isDarkMode,
                 modifier = Modifier.weight(1f),
@@ -116,11 +132,10 @@ fun PublishScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            PublishInput(
-                label = "Categoría",
-                value = category,
-                onValueChange = { category = it },
-                placeholder = "Selecciona una categoría",
+            // Dropdown de Categoría
+            CategoryDropdownMenu(
+                selectedCategory = category,
+                onCategorySelected = { category = it },
                 isDarkMode = isDarkMode
             )
 
@@ -136,13 +151,29 @@ fun PublishScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            PublishInput(
-                label = "Fecha y hora",
-                value = dateTime,
-                onValueChange = { dateTime = it },
-                placeholder = "Selecciona fecha y hora",
-                isDarkMode = isDarkMode
-            )
+            // Selectores de Fecha y Hora
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(modifier = Modifier.weight(1f).clickable { showDatePicker = true }) {
+                    PublishInput(
+                        label = "Fecha",
+                        value = date,
+                        onValueChange = {},
+                        placeholder = "DD/MM/AAAA",
+                        isDarkMode = isDarkMode,
+                        readOnly = true
+                    )
+                }
+                Box(modifier = Modifier.weight(1f).clickable { showTimePicker = true }) {
+                    PublishInput(
+                        label = "Hora",
+                        value = time,
+                        onValueChange = {},
+                        placeholder = "HH:MM",
+                        isDarkMode = isDarkMode,
+                        readOnly = true
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -156,8 +187,36 @@ fun PublishScreen(
 
             Spacer(modifier = Modifier.height(26.dp))
 
+            // Botón de Publicar Modificado
             Button(
-                onClick = {},
+                onClick = {
+                    if (name.isNotBlank() && category.isNotBlank() && place.isNotBlank() && date.isNotBlank() && time.isNotBlank()) {
+
+                        val dateTimeFormat = "$date, $time"
+
+                        val nuevoObjeto = ObjetoReportado(
+                            nombre = name,
+                            categoria = category,
+                            ubicacion = place,
+                            fechaHora = dateTimeFormat,
+                            descripcion = description,
+                            estado = if (selectedType == PublishType.Lost) "PERDIDO" else "ENCONTRADO"
+                        )
+
+                        firestoreManager.agregarObjeto(nuevoObjeto) { exito, mensaje ->
+                            if (exito) {
+                                // Aquí puedes mostrar un Toast de éxito y navegar hacia atrás
+                                onBack()
+                            } else {
+                                // Aquí puedes manejar el error visualmente
+                                println("Error al publicar: $mensaje")
+                            }
+                        }
+                    } else {
+                        // Aquí deberías mostrar un mensaje pidiendo llenar los campos obligatorios
+                        println("Por favor llena todos los campos obligatorios")
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -168,15 +227,60 @@ fun PublishScreen(
             ) {
                 Text(
                     text = "Publicar",
-                    color = WayWhite,
+                    color = Color.White,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
     }
+
+    // Lógica del DatePickerDialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        date = formatter.format(Date(millis))
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Lógica del TimePickerDialog
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState()
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val isPm = timePickerState.hour >= 12
+                    val amPm = if (isPm) "PM" else "AM"
+                    val hour12 = if (timePickerState.hour % 12 == 0) 12 else timePickerState.hour % 12
+                    val minuteFormat = timePickerState.minute.toString().padStart(2, '0')
+                    time = "$hour12:$minuteFormat $amPm"
+                    showTimePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
+            },
+            text = { TimePicker(state = timePickerState) }
+        )
+    }
 }
 
+// (Aquí van PublishHeader, PublishTypeCard y PhotoUploadCard que ya tenías igual)
 @Composable
 fun PublishHeader(
     onBack: () -> Unit
@@ -338,13 +442,68 @@ fun PhotoUploadCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryDropdownMenu(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    isDarkMode: Boolean
+) {
+    val categories = listOf("Ropa", "Llaves", "Cartera", "Útiles", "Electrónica", "Otros")
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Text(
+            text = "Categoría",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                value = selectedCategory,
+                onValueChange = {},
+                readOnly = true,
+                placeholder = { Text("Selecciona una categoría", fontSize = 13.sp) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.fillMaxWidth().height(52.dp).menuAnchor(),
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = WayPurple,
+                    unfocusedBorderColor = if (isDarkMode) MaterialTheme.colorScheme.outline else Color.Gray,
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                categories.forEach { selectionOption ->
+                    DropdownMenuItem(
+                        text = { Text(selectionOption) },
+                        onClick = {
+                            onCategorySelected(selectionOption)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun PublishInput(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    readOnly: Boolean = false // Añadido para los campos de fecha/hora
 ) {
     Column {
         Text(
@@ -360,6 +519,8 @@ fun PublishInput(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
+            readOnly = readOnly,
+            enabled = !readOnly, // Si es readonly, deshabilitamos la escritura nativa para que funcione el click
             textStyle = TextStyle(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp
@@ -367,7 +528,7 @@ fun PublishInput(
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = WayTextMuted,
+                    color = Color.Gray,
                     fontSize = 13.sp
                 )
             },
@@ -377,14 +538,9 @@ fun PublishInput(
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = WayPurple,
-                unfocusedBorderColor = if (isDarkMode) {
-                    MaterialTheme.colorScheme.outline
-                } else {
-                    WayBorder
-                },
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                cursorColor = WayPurple
+                unfocusedBorderColor = if (isDarkMode) MaterialTheme.colorScheme.outline else Color.Gray,
+                disabledBorderColor = if (isDarkMode) MaterialTheme.colorScheme.outline else Color.Gray,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface
             )
         )
     }
