@@ -164,7 +164,7 @@ fun AuthScreen(
                     } else {
                         // LÓGICA DE REGISTRO
                         if (email.isNotEmpty() && password.isNotEmpty() && password == confirmPassword) {
-                            authManager.registrarUsuario(email, password) { exitoso, mensaje ->
+                            authManager.registrarUsuario(fullName,email, password) { exitoso, mensaje ->
                                 Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
                                 if (exitoso) {
                                     isLogin = true // Si se registra bien, lo pasamos a la pantalla de login
