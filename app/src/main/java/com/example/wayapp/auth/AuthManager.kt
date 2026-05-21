@@ -7,9 +7,7 @@ class AuthManager {
     // Instancia de Firebase Auth
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    /**
-     * Función para registrar un nuevo usuario en la app WAY
-     */
+    //Función para registrar un nuevo usuario en la app WAY
     fun registrarUsuario(fullName: String, correo: String, contrasena: String, onResult: (Boolean, String?) -> Unit) {
 
         // 1. Validar nombre de usuario no sea Blank
@@ -51,9 +49,7 @@ class AuthManager {
             }
     }
 
-    /**
-     * Función para iniciar sesión con un usuario existente
-     */
+    //Función para iniciar sesión con un usuario existente
     fun iniciarSesion(correo: String, contrasena: String, onResult: (Boolean, String?) -> Unit) {
         auth.signInWithEmailAndPassword(correo, contrasena)
             .addOnCompleteListener { task ->
