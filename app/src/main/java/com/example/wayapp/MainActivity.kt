@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import com.example.wayapp.ui.navigation.AppNavigation
+import com.example.wayapp.navigation.AppNavigation
 import com.example.wayapp.ui.theme.ThemeMode
 import com.example.wayapp.ui.theme.WAYAPPTheme
 

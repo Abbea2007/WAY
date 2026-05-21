@@ -1,4 +1,4 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.screens
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState

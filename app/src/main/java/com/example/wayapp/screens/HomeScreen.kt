@@ -1,8 +1,7 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.screens
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,10 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
-import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.example.wayapp.data.FirestoreManager
-import com.example.wayapp.model.ObjetoReportado
+import com.example.wayapp.settings.SettingsScreen
 
 data class LostItem(
     val title: String,

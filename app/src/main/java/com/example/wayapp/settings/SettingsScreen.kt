@@ -1,4 +1,4 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

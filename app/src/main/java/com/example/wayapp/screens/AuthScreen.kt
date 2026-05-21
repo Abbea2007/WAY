@@ -1,4 +1,4 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.screens
 
 import android.widget.Toast // IMPORTANTE AGREGAR ESTO
 import androidx.compose.animation.core.animateFloatAsState

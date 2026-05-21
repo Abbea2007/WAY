@@ -1,12 +1,12 @@
-package com.example.wayapp.ui.navigation
+package com.example.wayapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.wayapp.ui.screens.AuthScreen
-import com.example.wayapp.ui.screens.HomeScreen
-import com.example.wayapp.ui.screens.OnboardingScreen
+import com.example.wayapp.screens.AuthScreen
+import com.example.wayapp.screens.HomeScreen
+import com.example.wayapp.screens.OnboardingScreen
 import com.example.wayapp.ui.theme.ThemeMode
 
 @Composable
