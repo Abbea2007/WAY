@@ -51,7 +51,9 @@ class AuthManager {
 
     //Función para iniciar sesión con un usuario existente
     fun iniciarSesion(correo: String, contrasena: String, onResult: (Boolean, String?) -> Unit) {
-        if (correo == "jmvargas@uamv.edu.ni" && contrasena == "1234") {
+        // Bypass temporal para desarrollo
+        //por cosas de la vida utilizaremos este correo y contraseña
+        if (correo == "dslopez@uam.edu.ni" && contrasena == "123456789") {
             onResult(true, "Inicio de sesión exitoso")
             return
         }
