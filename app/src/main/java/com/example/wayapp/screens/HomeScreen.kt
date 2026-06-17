@@ -2,6 +2,7 @@ package com.example.wayapp.screens
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,7 +49,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.foundation.lazy.LazyRow
 import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.settings.SettingsScreen
 
@@ -68,7 +81,8 @@ enum class BottomNavItem {
 @Composable
 fun HomeScreen(
     themeMode: ThemeMode,
-    onThemeChange: (ThemeMode) -> Unit
+    onThemeChange: (ThemeMode) -> Unit,
+    onProfileClick: () -> Unit = {}
 ) {
     // 1. INSTANCIAMOS EL BACKEND Y EL CONTEXTO
     val firestoreManager = remember { FirestoreManager() }
@@ -100,7 +114,10 @@ fun HomeScreen(
         ) {
             when (selectedItem) {
                 BottomNavItem.Home -> {
-                    HomeHeader(isDarkMode = isDarkMode)
+                    HomeHeader(
+                        isDarkMode = isDarkMode,
+                        onProfileClick = onProfileClick
+                    )
 
                     Spacer(modifier = Modifier.height(18.dp))
 
@@ -113,6 +130,14 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     HomeTabs(isDarkMode = isDarkMode)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    CategoriesSection(isDarkMode = isDarkMode)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    LocationsSection(isDarkMode = isDarkMode)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -373,6 +398,135 @@ fun TabPill(
             text = text,
             color = if (active) WayWhite else MaterialTheme.colorScheme.onSurface,
             fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun CategoriesSection(isDarkMode: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Categorías",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Ver todas",
+                color = WayPurple,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { }
+            )
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            item { CategoryItem("Tecnología", Icons.Outlined.Devices, isDarkMode) }
+            item { CategoryItem("Mochilas", Icons.Outlined.ShoppingBag, isDarkMode) }
+            item { CategoryItem("Llaves", Icons.Outlined.Key, isDarkMode) }
+            item { CategoryItem("Documentos", Icons.Outlined.Description, isDarkMode) }
+            item { CategoryItem("Ropa", Icons.Outlined.Checkroom, isDarkMode) }
+        }
+    }
+}
+
+@Composable
+fun CategoryItem(name: String, icon: ImageVector, isDarkMode: Boolean) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(
+                    width = 1.dp,
+                    color = if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder,
+                    shape = CircleShape
+                )
+                .clickable { },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = name,
+                tint = WayTextPrimary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Text(
+            text = name,
+            color = WayTextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun LocationsSection(isDarkMode: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Ubicaciones frecuentes",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Ver todas",
+                color = WayPurple,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { }
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LocationPill("Biblioteca Central", isDarkMode)
+                LocationPill("Cafetería Central", isDarkMode)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LocationPill("Edificio A", isDarkMode)
+                LocationPill("Gimnasio", isDarkMode)
+                LocationPill("Estacionamiento B", isDarkMode)
+            }
+        }
+    }
+}
+
+@Composable
+fun LocationPill(name: String, isDarkMode: Boolean) {
+    Surface(
+        modifier = Modifier.clickable { },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder
+        )
+    ) {
+        Text(
+            text = name,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            fontSize = 13.sp,
+            color = WayTextSecondary,
             fontWeight = FontWeight.Medium
         )
     }
