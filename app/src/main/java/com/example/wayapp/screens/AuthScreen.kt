@@ -1,6 +1,6 @@
 package com.example.wayapp.screens
 
-import android.widget.Toast // IMPORTANTE AGREGAR ESTO
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -25,7 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext // IMPORTANTE AGREGAR ESTO
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.ui.theme.*
 import com.example.wayapp.R
-import com.example.wayapp.auth.AuthManager // IMPORTAMOS TU BACKEND
+import com.example.wayapp.auth.AuthManager
 
 @Composable
 fun AuthScreen(
