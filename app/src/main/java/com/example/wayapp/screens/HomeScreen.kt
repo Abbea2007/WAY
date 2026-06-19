@@ -56,12 +56,6 @@ import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material.icons.outlined.Checkroom
-import androidx.compose.foundation.lazy.LazyRow
 import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.settings.SettingsScreen
 
@@ -82,7 +76,8 @@ enum class BottomNavItem {
 fun HomeScreen(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onFilterClick: () -> Unit = {}
 ) {
     // 1. INSTANCIAMOS EL BACKEND Y EL CONTEXTO
     val firestoreManager = remember { FirestoreManager() }
@@ -124,7 +119,8 @@ fun HomeScreen(
                     HomeSearchBar(
                         value = searchText,
                         onValueChange = { searchText = it },
-                        isDarkMode = isDarkMode
+                        isDarkMode = isDarkMode,
+                        onFilterClick = onFilterClick
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -208,7 +204,8 @@ fun HomeScreen(
 @Composable
 fun HomeHeader(
     onProfileClick: () -> Unit = {},
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    onFilterClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -270,7 +267,8 @@ fun HomeHeader(
 fun HomeSearchBar(
     value: String,
     onValueChange: (String) -> Unit,
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    onFilterClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -342,7 +340,8 @@ fun HomeSearchBar(
                     else
                         WayBorder,
                     shape = RoundedCornerShape(14.dp)
-                ),
+                )
+                .clickable { onFilterClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(

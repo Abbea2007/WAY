@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.wayapp.screens.AuthScreen
 import com.example.wayapp.screens.ChatDetailScreen
+import com.example.wayapp.screens.FilterScreen
 import com.example.wayapp.screens.HomeScreen
 import com.example.wayapp.screens.MyMessagesScreen
 import com.example.wayapp.screens.MyPublicationsScreen
@@ -54,7 +55,17 @@ fun AppNavigation(
                 onThemeChange = onThemeChange,
                 onProfileClick = {
                     navController.navigate("profile")
+                },
+                onFilterClick = {
+                    navController.navigate("filters")
                 }
+            )
+        }
+
+        composable("filters") {
+            FilterScreen(
+                onBack = { navController.popBackStack() },
+                onApply = { navController.popBackStack() }
             )
         }
 
