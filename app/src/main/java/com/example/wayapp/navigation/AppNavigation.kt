@@ -8,6 +8,7 @@ import com.example.wayapp.screens.AuthScreen
 import com.example.wayapp.screens.ChatDetailScreen
 import com.example.wayapp.screens.FilterScreen
 import com.example.wayapp.screens.HomeScreen
+import com.example.wayapp.screens.ItemDetailScreen
 import com.example.wayapp.screens.MyMessagesScreen
 import com.example.wayapp.screens.MyPublicationsScreen
 import com.example.wayapp.screens.NotificationsScreen
@@ -58,7 +59,18 @@ fun AppNavigation(
                 },
                 onFilterClick = {
                     navController.navigate("filters")
+                },
+                        onItemClick = { itemId ->
+                    navController.navigate("item_detail/$itemId")
                 }
+            )
+        }
+
+        composable("item_detail/{itemId}") { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
+            ItemDetailScreen(
+                itemId = itemId,
+                onBack = { navController.popBackStack() }
             )
         }
 

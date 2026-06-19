@@ -60,6 +60,7 @@ import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.settings.SettingsScreen
 
 data class LostItem(
+    val id: String,
     val title: String,
     val status: String,
     val isFound: Boolean,
@@ -77,18 +78,19 @@ fun HomeScreen(
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
     onProfileClick: () -> Unit = {},
-    onFilterClick: () -> Unit = {}
+    onFilterClick: () -> Unit = {},
+    onItemClick: (String) -> Unit = {}
 ) {
     // 1. INSTANCIAMOS EL BACKEND Y EL CONTEXTO
     val firestoreManager = remember { FirestoreManager() }
     val context = LocalContext.current
 
     val items = listOf(
-        LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17),
-        LostItem("Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18),
-        LostItem("Llaves de carro", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle19),
-        LostItem("Termo para café", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle20),
-        LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
+        LostItem("1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17),
+        LostItem("2", "Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18),
+        LostItem("3", "Llaves de carro", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle19),
+        LostItem("4", "Termo para café", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle20),
+        LostItem("5", "Billetera", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
     )
 
     var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
@@ -109,47 +111,48 @@ fun HomeScreen(
         ) {
             when (selectedItem) {
                 BottomNavItem.Home -> {
-                    HomeHeader(
-                        isDarkMode = isDarkMode,
-                        onProfileClick = onProfileClick
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    HomeSearchBar(
-                        value = searchText,
-                        onValueChange = { searchText = it },
-                        isDarkMode = isDarkMode,
-                        onFilterClick = onFilterClick
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    HomeTabs(isDarkMode = isDarkMode)
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    CategoriesSection(isDarkMode = isDarkMode)
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    LocationsSection(isDarkMode = isDarkMode)
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    SectionHeader()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
+                        item {
+                            HomeHeader(
+                                isDarkMode = isDarkMode,
+                                onProfileClick = onProfileClick
+                            )
+                        }
+
+                        item {
+                            HomeSearchBar(
+                                value = searchText,
+                                onValueChange = { searchText = it },
+                                isDarkMode = isDarkMode,
+                                onFilterClick = onFilterClick
+                            )
+                        }
+
+                        item {
+                            HomeTabs(isDarkMode = isDarkMode)
+                        }
+
+                        item {
+                            CategoriesSection(isDarkMode = isDarkMode)
+                        }
+
+                        item {
+                            LocationsSection(isDarkMode = isDarkMode)
+                        }
+
+                        item {
+                            SectionHeader()
+                        }
+
                         items(items) { item ->
                             ObjectCard(
                                 item = item,
-                                isDarkMode = isDarkMode
+                                isDarkMode = isDarkMode,
+                                onClick = { onItemClick(item.id) }
                             )
                         }
                     }
@@ -557,7 +560,8 @@ fun SectionHeader() {
 @Composable
 fun ObjectCard(
     item: LostItem,
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -580,6 +584,7 @@ fun ObjectCard(
                     )
                 } else Modifier
             )
+            .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
