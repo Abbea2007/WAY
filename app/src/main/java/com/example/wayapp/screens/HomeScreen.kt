@@ -461,7 +461,7 @@ fun CategoryItem(name: String, icon: ImageVector, isDarkMode: Boolean) {
             Icon(
                 imageVector = icon,
                 contentDescription = name,
-                tint = WayTextPrimary,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -666,7 +666,7 @@ fun ObjectCard(
 fun HomeBottomBar(
     selectedItem: BottomNavItem,
     onItemSelected: (BottomNavItem) -> Unit,
-    onAddClick: () -> Unit = {}, // <-- 1. AGREGAMOS ESTE PARÁMETRO
+    onAddClick: () -> Unit = {}, // <-- 1. se agrego este parametro
     modifier: Modifier = Modifier
 ) {
     val plusInteractionSource = remember { MutableInteractionSource() }

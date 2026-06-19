@@ -1,7 +1,7 @@
 package com.example.wayapp.auth
 
 import com.google.firebase.auth.FirebaseAuth
-
+//AppWAYAPP original
 class AuthManager {
 
     // Instancia de Firebase Auth
@@ -52,8 +52,7 @@ class AuthManager {
     //Función para iniciar sesión con un usuario existente
     fun iniciarSesion(correo: String, contrasena: String, onResult: (Boolean, String?) -> Unit) {
         // Bypass temporal para desarrollo
-        //por cosas de la vida utilizaremos este correo y contraseña
-        if (correo == "dslopez@uam.edu.ni" && contrasena == "123456789") {
+        if (correo == "dslopez@uamv.edu.ni" && contrasena == "1234") {
             onResult(true, "Inicio de sesión exitoso")
             return
         }
