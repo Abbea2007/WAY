@@ -33,11 +33,26 @@ fun ItemDetailScreen(
 ) {
     // Datos de prueba según el ID
     val item = when (itemId) {
-        "1" -> LostItem("1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17)
-        "2" -> LostItem("2", "Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18)
-        "3" -> LostItem("3", "Llaves de carro", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle19)
-        "4" -> LostItem("4", "Termo para café", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle20)
-        else -> LostItem("5", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
+        "1" -> LostItem(
+            "1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca Central", R.drawable.rectangle17,
+            "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.", "Apple", "Blanco", "Buen estado"
+        )
+        "2" -> LostItem(
+            "2", "Mochila Negra", "Perdido", false, "Ayer, 6:45 p.m.", "Edificio A", R.drawable.rectangle18,
+            "Perdí mi mochila con mis cuadernos cerca de la entrada principal del edificio.", "Nike", "Negro", "Usado"
+        )
+        "3" -> LostItem(
+            "3", "Llaves de carro", "Perdido", false, "Hace 2 horas", "Estacionamiento B", R.drawable.rectangle19,
+            "Se me cayeron las llaves al bajar del auto. Tienen un llavero de metal con forma de corazón.", "Toyota", "Plateado", "Excelente"
+        )
+        "4" -> LostItem(
+            "4", "Termo para café", "Encontrado", true, "Hoy, 8:15 a.m.", "Cafetería Central", R.drawable.rectangle20,
+            "Olvidaron este termo en una de las mesas exteriores cerca de la fuente.", "Starbucks", "Azul marino", "Como nuevo"
+        )
+        else -> LostItem(
+            "5", "Billetera", "Encontrado", true, "Lunes, 4:00 p.m.", "Gimnasio", R.drawable.rectangle21,
+            "Billetera de cuero encontrada en los vestidores del gimnasio.", "Tommy Hilfiger", "Café", "Desgastada"
+        )
     }
 
     Box(
@@ -178,7 +193,7 @@ fun ItemDetailScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Sala de lectura 2, mesa 14", // Dato extra inventado
+                            text = if (item.id == "1") "Sala de lectura 2, mesa 14" else "Área común, planta baja",
                             fontSize = 13.sp,
                             color = WayTextSecondary
                         )
@@ -199,7 +214,7 @@ fun ItemDetailScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.",
+                    text = item.description,
                     fontSize = 14.sp,
                     color = WayTextSecondary,
                     lineHeight = 22.sp
@@ -216,9 +231,9 @@ fun ItemDetailScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                InfoRow("Marca", "Apple")
-                InfoRow("Color", "Blanco")
-                InfoRow("Estado", "Buen estado")
+                InfoRow("Marca", item.brand)
+                InfoRow("Color", item.color)
+                InfoRow("Estado", item.state)
 
                 Spacer(modifier = Modifier.height(100.dp))
             }
