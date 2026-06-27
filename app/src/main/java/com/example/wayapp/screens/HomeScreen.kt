@@ -89,28 +89,30 @@ fun HomeScreen(
     val firestoreManager = remember { FirestoreManager() }
     val context = LocalContext.current
 
-    val items = listOf(
-        LostItem(
-            "1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17,
-            "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.", "Apple", "Blanco", "Buen estado"
-        ),
-        LostItem(
-            "2", "Mochila Negra", "Perdido", false, "Ayer, 6:45 p.m.", "Edificio A", R.drawable.rectangle18,
-            "Perdí mi mochila con mis cuadernos cerca de la entrada principal.", "Nike", "Negro", "Usado"
-        ),
-        LostItem(
-            "3", "Llaves de carro", "Perdido", false, "Hace 2 horas", "Estacionamiento B", R.drawable.rectangle19,
-            "Se me cayeron las llaves al bajar del auto. Tienen un llavero de metal.", "Toyota", "Plateado", "N/A"
-        ),
-        LostItem(
-            "4", "Termo para café", "Encontrado", true, "Hoy, 8:15 a.m.", "Cafetería Central", R.drawable.rectangle20,
-            "Olvidaron este termo en una de las mesas exteriores.", "Starbucks", "Azul marino", "Como nuevo"
-        ),
-        LostItem(
-            "5", "Billetera", "Encontrado", true, "Lunes, 4:00 p.m.", "Gimnasio", R.drawable.rectangle21,
-            "Billetera de cuero encontrada en los vestidores.", "Tommy Hilfiger", "Café", "Desgastada"
+    val items = remember {
+        listOf(
+            LostItem(
+                "1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17,
+                "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.", "Apple", "Blanco", "Buen estado"
+            ),
+            LostItem(
+                "2", "Mochila Negra", "Perdido", false, "Ayer, 6:45 p.m.", "Edificio A", R.drawable.rectangle18,
+                "Perdí mi mochila con mis cuadernos cerca de la entrada principal.", "Nike", "Negro", "Usado"
+            ),
+            LostItem(
+                "3", "Llaves de carro", "Perdido", false, "Hace 2 horas", "Estacionamiento B", R.drawable.rectangle19,
+                "Se me cayeron las llaves al bajar del auto. Tienen un llavero de metal.", "Toyota", "Plateado", "N/A"
+            ),
+            LostItem(
+                "4", "Termo para café", "Encontrado", true, "Hoy, 8:15 a.m.", "Cafetería Central", R.drawable.rectangle20,
+                "Olvidaron este termo en una de las mesas exteriores.", "Starbucks", "Azul marino", "Como nuevo"
+            ),
+            LostItem(
+                "5", "Billetera", "Encontrado", true, "Lunes, 4:00 p.m.", "Gimnasio", R.drawable.rectangle21,
+                "Billetera de cuero encontrada en los vestidores.", "Tommy Hilfiger", "Café", "Desgastada"
+            )
         )
-    )
+    }
 
     var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
     var searchText by remember { mutableStateOf("") }
