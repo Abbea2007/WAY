@@ -63,6 +63,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.ui.platform.LocalContext
 import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.settings.SettingsScreen
+import com.example.wayapp.viewmodel.UserProfileViewModel
 import androidx.compose.runtime.collectAsState
 
 data class LostItem(
@@ -74,9 +75,7 @@ data class LostItem(
     val location: String,
     @DrawableRes val image: Int,
     val description: String = "",
-    val brand: String = "",
-    val color: String = "",
-    val state: String = ""
+    val brand: String = ""
 )
 
 enum class BottomNavItem {
@@ -90,7 +89,8 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     onItemClick: (String) -> Unit = {},
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(),
+    userViewModel: UserProfileViewModel = viewModel()
 ) {
     // 1. Se instancia el backend y el contexto
     val firestoreManager = remember { FirestoreManager() }
@@ -108,11 +108,9 @@ fun HomeScreen(
             isFound = objeto.estado != "PERDIDO",
             time = objeto.fechaHora,
             location = objeto.ubicacion,
-            image = R.drawable.rectangle17,
+            image = R.drawable.imagen_lost_defauld,
             description = objeto.descripcion,
-            brand = objeto.categoria,
-            color = "N/A",
-            state = "N/A"
+            brand = objeto.categoria
         )
     }
 
@@ -142,7 +140,8 @@ fun HomeScreen(
                         item {
                             HomeHeader(
                                 isDarkMode = isDarkMode,
-                                onProfileClick = onProfileClick
+                                onProfileClick = onProfileClick,
+                                userViewModel = userViewModel
                             )
                         }
 
@@ -231,7 +230,8 @@ fun HomeScreen(
 fun HomeHeader(
     onProfileClick: () -> Unit = {},
     isDarkMode: Boolean,
-    onFilterClick: () -> Unit = {}
+    onFilterClick: () -> Unit = {},
+    userViewModel: UserProfileViewModel
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -242,7 +242,7 @@ fun HomeHeader(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Hola, Abea 👋",
+                text = "Hola, ${userViewModel.name} 👋",
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
@@ -260,7 +260,7 @@ fun HomeHeader(
             modifier = Modifier.clickable { onProfileClick() }
         ) {
             Image(
-                painter = painterResource(id = R.drawable.profile_photo),
+                painter = painterResource(id = userViewModel.profilePhotoRes),
                 contentDescription = "Perfil",
                 modifier = Modifier
                     .size(52.dp)

@@ -57,9 +57,7 @@ fun ItemDetailScreen(
         location = objeto!!.ubicacion,
         image = R.drawable.rectangle17, // Imagen por defecto mientras integramos fotos
         description = objeto!!.descripcion,
-        brand = objeto!!.categoria,
-        color = "N/A",
-        state = "N/A"
+        brand = objeto!!.categoria
     )
 
     Box(
@@ -239,8 +237,6 @@ fun ItemDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 InfoRow("Marca", item.brand)
-                InfoRow("Color", item.color)
-                InfoRow("Estado", item.state)
 
                 Spacer(modifier = Modifier.height(100.dp))
             }

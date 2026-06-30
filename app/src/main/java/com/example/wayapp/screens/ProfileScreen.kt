@@ -1,7 +1,6 @@
 package com.example.wayapp.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Chat
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -25,8 +25,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.wayapp.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wayapp.ui.theme.*
+import com.example.wayapp.viewmodel.UserProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,15 +35,24 @@ fun ProfileScreen(
     onBack: () -> Unit = {},
     onMyPublicationsClick: () -> Unit = {},
     onMyMessagesClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {}
+    onNotificationsClick: () -> Unit = {},
+    userViewModel: UserProfileViewModel = viewModel()
 ) {
     var isEditing by remember { mutableStateOf(false) }
 
-    // User data state
-    var name by remember { mutableStateOf("Ana Garcia") }
-    var role by remember { mutableStateOf("Estudiante") }
-    var major by remember { mutableStateOf("Ingeniería de Software") }
-    val studentId = "ID: 20231345"
+    // User data state from ViewModel
+    var nameEdit by remember { mutableStateOf(userViewModel.name) }
+    var roleEdit by remember { mutableStateOf(userViewModel.role) }
+    var majorEdit by remember { mutableStateOf(userViewModel.major) }
+
+    // Actualizar los campos de edición cuando el ViewModel cambia (ej. al entrar a la pantalla)
+    LaunchedEffect(isEditing) {
+        if (!isEditing) {
+            nameEdit = userViewModel.name
+            roleEdit = userViewModel.role
+            majorEdit = userViewModel.major
+        }
+    }
 
     val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
 
@@ -67,7 +77,12 @@ fun ProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isEditing = !isEditing }) {
+                    IconButton(onClick = {
+                        if (isEditing) {
+                            userViewModel.updateProfile(nameEdit, roleEdit, majorEdit)
+                        }
+                        isEditing = !isEditing
+                    }) {
                         Icon(
                             imageVector = if (isEditing) Icons.Outlined.Check else Icons.Outlined.Edit,
                             contentDescription = if (isEditing) "Guardar" else "Editar",
@@ -75,8 +90,12 @@ fun ProfileScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = Color.Unspecified,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },
@@ -98,7 +117,7 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.profile_photo),
+                        painter = painterResource(id = userViewModel.profilePhotoRes),
                         contentDescription = "Foto de Perfil",
                         modifier = Modifier
                             .size(100.dp)
@@ -116,8 +135,8 @@ fun ProfileScreen(
                     Column {
                         if (isEditing) {
                             OutlinedTextField(
-                                value = name,
-                                onValueChange = { name = it },
+                                value = nameEdit,
+                                onValueChange = { nameEdit = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 label = { Text("Nombre") },
                                 singleLine = true,
@@ -125,8 +144,8 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             OutlinedTextField(
-                                value = role,
-                                onValueChange = { role = it },
+                                value = roleEdit,
+                                onValueChange = { roleEdit = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 label = { Text("Rol") },
                                 singleLine = true,
@@ -134,8 +153,8 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             OutlinedTextField(
-                                value = major,
-                                onValueChange = { major = it },
+                                value = majorEdit,
+                                onValueChange = { majorEdit = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 label = { Text("Carrera") },
                                 singleLine = true,
@@ -143,23 +162,23 @@ fun ProfileScreen(
                             )
                         } else {
                             Text(
-                                text = name,
+                                text = userViewModel.name,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                             Text(
-                                text = role,
+                                text = userViewModel.role,
                                 fontSize = 14.sp,
                                 color = WayTextSecondary
                             )
                             Text(
-                                text = major,
+                                text = userViewModel.major,
                                 fontSize = 14.sp,
                                 color = WayTextSecondary
                             )
                             Text(
-                                text = studentId,
+                                text = userViewModel.studentId,
                                 fontSize = 14.sp,
                                 color = WayPurple,
                                 fontWeight = FontWeight.Medium
@@ -191,40 +210,33 @@ fun ProfileScreen(
                 ProfileMenuItem(
                     icon = Icons.Outlined.Home,
                     text = "Mis publicaciones",
-                    isDarkMode = isDarkMode,
                     onClick = onMyPublicationsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.AutoMirrored.Outlined.Chat,
                     text = "Mis mensajes",
-                    isDarkMode = isDarkMode,
                     onClick = onMyMessagesClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Outlined.BookmarkBorder,
-                    text = "Objetos guardados",
-                    isDarkMode = isDarkMode
+                    text = "Objetos guardados"
                 )
                 ProfileMenuItem(
                     icon = Icons.Outlined.Notifications,
                     text = "Notificaciones",
-                    isDarkMode = isDarkMode,
                     onClick = onNotificationsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Outlined.LocationOn,
-                    text = "Lugares frecuentes",
-                    isDarkMode = isDarkMode
+                    text = "Lugares frecuentes"
                 )
                 ProfileMenuItem(
-                    icon = Icons.Outlined.HelpOutline,
-                    text = "Ayuda y soporte",
-                    isDarkMode = isDarkMode
+                    icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                    text = "Ayuda y soporte"
                 )
                 ProfileMenuItem(
                     icon = Icons.Outlined.Info,
-                    text = "Acerca de WAY",
-                    isDarkMode = isDarkMode
+                    text = "Acerca de WAY"
                 )
 
                 Spacer(modifier = Modifier.height(40.dp))
@@ -254,7 +266,6 @@ fun StatItem(number: String, label: String) {
 fun ProfileMenuItem(
     icon: ImageVector,
     text: String,
-    isDarkMode: Boolean,
     onClick: () -> Unit = {}
 ) {
     Row(

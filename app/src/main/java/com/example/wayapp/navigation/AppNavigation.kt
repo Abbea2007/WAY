@@ -1,20 +1,14 @@
 package com.example.wayapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.wayapp.screens.AuthScreen
-import com.example.wayapp.screens.ChatDetailScreen
-import com.example.wayapp.screens.FilterScreen
-import com.example.wayapp.screens.HomeScreen
-import com.example.wayapp.screens.ItemDetailScreen
-import com.example.wayapp.screens.MyMessagesScreen
-import com.example.wayapp.screens.MyPublicationsScreen
-import com.example.wayapp.screens.NotificationsScreen
-import com.example.wayapp.screens.OnboardingScreen
-import com.example.wayapp.screens.ProfileScreen
+import com.example.wayapp.screens.*
 import com.example.wayapp.ui.theme.ThemeMode
+import com.example.wayapp.viewmodel.UserProfileViewModel
+
 // ENRUTADOR PRINCIPAL: Centraliza la navegación y el flujo de pantallas de la aplicación.
 @Composable
 fun AppNavigation(
@@ -22,6 +16,7 @@ fun AppNavigation(
     onThemeChange: (ThemeMode) -> Unit
 ) {
     val navController = rememberNavController()
+    val userProfileViewModel: UserProfileViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -31,9 +26,6 @@ fun AppNavigation(
             OnboardingScreen(
                 onFinish = {
                     navController.navigate("auth") {
-                        // Limpieza de pila: Elimina "onboarding" del historial (inclusive = true).
-                        // Si el usuario está en "auth" y presiona el botón "Atrás",
-                        // saldrá de la app en lugar de volver a ver la bienvenida.
                         popUpTo("onboarding") { inclusive = true }
                     }
                 }
@@ -60,9 +52,10 @@ fun AppNavigation(
                 onFilterClick = {
                     navController.navigate("filters")
                 },
-                        onItemClick = { itemId ->
+                onItemClick = { itemId ->
                     navController.navigate("item_detail/$itemId")
-                }
+                },
+                userViewModel = userProfileViewModel
             )
         }
 
@@ -94,7 +87,8 @@ fun AppNavigation(
                 },
                 onNotificationsClick = {
                     navController.navigate("notifications")
-                }
+                },
+                userViewModel = userProfileViewModel
             )
         }
 
