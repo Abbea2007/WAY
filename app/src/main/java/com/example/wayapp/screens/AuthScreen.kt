@@ -48,7 +48,7 @@ fun AuthScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var isLogin by remember { mutableStateOf(true) }
 
-    // 1. INSTANCIAMOS TU BACKEND AQUÍ
+    // 1. INSTANCIAMOS EL BACKEND AQUÍ
     val authManager = remember { AuthManager() }
 
     // 2. OBTENEMOS EL CONTEXTO PARA MOSTRAR MENSAJES (TOASTS)

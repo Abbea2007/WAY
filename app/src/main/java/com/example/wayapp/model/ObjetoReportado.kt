@@ -1,13 +1,19 @@
 package com.example.wayapp.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+// 1. Le decimos a Room que esta clase será una tabla en la base de datos
+@Entity(tableName = "objetos_reportados")
 data class ObjetoReportado(
+    @PrimaryKey
     val id: String = "",
-    val nombre: String = "",          // [NO OPCIONAL en UI] Ej: "Botella de agua" (Reemplaza a 'titulo')
-    val categoria: String = "",       // [NO OPCIONAL en UI] Sugerido para poder filtrar: "Ropa", "Electrónica", etc.
-    val ubicacion: String = "",       // [NO OPCIONAL en UI] Dónde se perdió o encontró
-    val fechaHora: String = "",       // [NO OPCIONAL en UI]
-    val descripcion: String = "",     // [OPCIONAL en UI]
-    val imageUrl: String = "",        // [OPCIONAL en UI] URL de la foto cuando configures Storage
-    val estado: String = "PERDIDO",   // "PERDIDO" o "ENCONTRADO"
-    val idUsuarioReporta: String = "" // El ID de quien lo sube
+    val nombre: String = "",
+    val categoria: String = "",
+    val ubicacion: String = "",
+    val fechaHora: String = "",
+    val descripcion: String = "",
+    val estado: String = "",
+    val imageUrl: String = "",
+    val idUsuarioReporta: String = "usuario_demo_123"
 )

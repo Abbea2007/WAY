@@ -14,6 +14,8 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,37 +25,42 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wayapp.R
 import com.example.wayapp.ui.theme.*
+import com.example.wayapp.viewmodel.HomeViewModel
 
 @Composable
 fun ItemDetailScreen(
     itemId: String,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    viewModel: HomeViewModel = viewModel() // Inyectamos el ViewModel
 ) {
-    // Datos de prueba según el ID
-    val item = when (itemId) {
-        "1" -> LostItem(
-            "1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca Central", R.drawable.rectangle17,
-            "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.", "Apple", "Blanco", "Buen estado"
-        )
-        "2" -> LostItem(
-            "2", "Mochila Negra", "Perdido", false, "Ayer, 6:45 p.m.", "Edificio A", R.drawable.rectangle18,
-            "Perdí mi mochila con mis cuadernos cerca de la entrada principal del edificio.", "Nike", "Negro", "Usado"
-        )
-        "3" -> LostItem(
-            "3", "Llaves de carro", "Perdido", false, "Hace 2 horas", "Estacionamiento B", R.drawable.rectangle19,
-            "Se me cayeron las llaves al bajar del auto. Tienen un llavero de metal con forma de corazón.", "Toyota", "Plateado", "Excelente"
-        )
-        "4" -> LostItem(
-            "4", "Termo para café", "Encontrado", true, "Hoy, 8:15 a.m.", "Cafetería Central", R.drawable.rectangle20,
-            "Olvidaron este termo en una de las mesas exteriores cerca de la fuente.", "Starbucks", "Azul marino", "Como nuevo"
-        )
-        else -> LostItem(
-            "5", "Billetera", "Encontrado", true, "Lunes, 4:00 p.m.", "Gimnasio", R.drawable.rectangle21,
-            "Billetera de cuero encontrada en los vestidores del gimnasio.", "Tommy Hilfiger", "Café", "Desgastada"
-        )
+    // 1. Observamos el objeto específico desde la base de datos
+    val objeto by viewModel.obtenerObjetoPorId(itemId).collectAsState(initial = null)
+
+    // 2. Pantalla de carga mientras se lee de la base de datos
+    if (objeto == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = WayPurple)
+        }
+        return // Pausamos la ejecución del diseño hasta que el objeto cargue
     }
+
+    // 3. Mapeamos el dato real a tu modelo visual (LostItem)
+    val item = LostItem(
+        id = objeto!!.id,
+        title = objeto!!.nombre,
+        status = if (objeto!!.estado == "PERDIDO") "Perdido" else "Encontrado",
+        isFound = objeto!!.estado != "PERDIDO",
+        time = objeto!!.fechaHora,
+        location = objeto!!.ubicacion,
+        image = R.drawable.rectangle17, // Imagen por defecto mientras integramos fotos
+        description = objeto!!.descripcion,
+        brand = objeto!!.categoria,
+        color = "N/A",
+        state = "N/A"
+    )
 
     Box(
         modifier = Modifier
@@ -193,7 +200,7 @@ fun ItemDetailScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = if (item.id == "1") "Sala de lectura 2, mesa 14" else "Área común, planta baja",
+                            text = "Ubicación registrada", // Quitamos el condicional quemado
                             fontSize = 13.sp,
                             color = WayTextSecondary
                         )

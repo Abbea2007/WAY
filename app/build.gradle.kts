@@ -2,10 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.example.wayapp"
+    compileSdk = 36
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -60,10 +62,18 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended")
+    // Firebase Storage
+    implementation("com.google.firebase:firebase-storage-ktx:21.0.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // splash api
     implementation(libs.androidx.core.splashscreen)
     //navigation
     implementation(libs.androidx.navigation.compose)
+    // Dependencias para Room
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")  // Se utiliza KPS
 }
 

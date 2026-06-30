@@ -1,5 +1,10 @@
 package com.example.wayapp.screens
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.wayapp.viewmodel.HomeViewModel
+import com.example.wayapp.model.ObjetoReportado
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -58,6 +63,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.ui.platform.LocalContext
 import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.settings.SettingsScreen
+import androidx.compose.runtime.collectAsState
 
 data class LostItem(
     val id: String,
@@ -83,39 +89,35 @@ fun HomeScreen(
     onThemeChange: (ThemeMode) -> Unit,
     onProfileClick: () -> Unit = {},
     onFilterClick: () -> Unit = {},
-    onItemClick: (String) -> Unit = {}
+    onItemClick: (String) -> Unit = {},
+    viewModel: HomeViewModel = viewModel()
 ) {
-    // 1. INSTANCIAMOS EL BACKEND Y EL CONTEXTO
+    // 1. Se instancia el backend y el contexto
     val firestoreManager = remember { FirestoreManager() }
     val context = LocalContext.current
 
-    val items = remember {
-        listOf(
-            LostItem(
-                "1", "Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17,
-                "Se encontraron estos audífonos en la sala de lectura. Estaban sobre la mesa.", "Apple", "Blanco", "Buen estado"
-            ),
-            LostItem(
-                "2", "Mochila Negra", "Perdido", false, "Ayer, 6:45 p.m.", "Edificio A", R.drawable.rectangle18,
-                "Perdí mi mochila con mis cuadernos cerca de la entrada principal.", "Nike", "Negro", "Usado"
-            ),
-            LostItem(
-                "3", "Llaves de carro", "Perdido", false, "Hace 2 horas", "Estacionamiento B", R.drawable.rectangle19,
-                "Se me cayeron las llaves al bajar del auto. Tienen un llavero de metal.", "Toyota", "Plateado", "N/A"
-            ),
-            LostItem(
-                "4", "Termo para café", "Encontrado", true, "Hoy, 8:15 a.m.", "Cafetería Central", R.drawable.rectangle20,
-                "Olvidaron este termo en una de las mesas exteriores.", "Starbucks", "Azul marino", "Como nuevo"
-            ),
-            LostItem(
-                "5", "Billetera", "Encontrado", true, "Lunes, 4:00 p.m.", "Gimnasio", R.drawable.rectangle21,
-                "Billetera de cuero encontrada en los vestidores.", "Tommy Hilfiger", "Café", "Desgastada"
-            )
+    // 1. Se observa la base de datos de Room en tiempo real
+    val objetosLocales by viewModel.objetosLocales.collectAsState(initial = emptyList<ObjetoReportado>())
+
+    // 2. Se convierte el modelo de datos (ObjetoReportado) al modelo de UI (LostItem)
+    val items = objetosLocales.map { objeto ->
+        LostItem(
+            id = objeto.id,
+            title = objeto.nombre,
+            status = if (objeto.estado == "PERDIDO") "Perdido" else "Encontrado",
+            isFound = objeto.estado != "PERDIDO",
+            time = objeto.fechaHora,
+            location = objeto.ubicacion,
+            image = R.drawable.rectangle17,
+            description = objeto.descripcion,
+            brand = objeto.categoria,
+            color = "N/A",
+            state = "N/A"
         )
     }
 
-    var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
     var searchText by remember { mutableStateOf("") }
+    var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
     val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
 
     Box(
