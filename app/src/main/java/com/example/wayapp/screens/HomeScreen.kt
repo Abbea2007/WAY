@@ -1,10 +1,5 @@
 package com.example.wayapp.screens
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.wayapp.viewmodel.HomeViewModel
-import com.example.wayapp.model.ObjetoReportado
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -14,25 +9,57 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,6 +71,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -52,19 +80,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wayapp.R
-import com.example.wayapp.ui.theme.*
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material.icons.outlined.Checkroom
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.ui.platform.LocalContext
 import com.example.wayapp.data.FirestoreManager
+import com.example.wayapp.model.ObjetoReportado
 import com.example.wayapp.settings.SettingsScreen
+import com.example.wayapp.ui.theme.ThemeMode
+import com.example.wayapp.ui.theme.WayBorder
+import com.example.wayapp.ui.theme.WayDarkBackground
+import com.example.wayapp.ui.theme.WayGreen
+import com.example.wayapp.ui.theme.WayGreenSoft
+import com.example.wayapp.ui.theme.WayPurple
+import com.example.wayapp.ui.theme.WayPurpleSoft
+import com.example.wayapp.ui.theme.WayRed
+import com.example.wayapp.ui.theme.WayTextMuted
+import com.example.wayapp.ui.theme.WayTextSecondary
+import com.example.wayapp.ui.theme.WayWhite
+import com.example.wayapp.viewmodel.HomeViewModel
 import com.example.wayapp.viewmodel.UserProfileViewModel
-import androidx.compose.runtime.collectAsState
 
 data class LostItem(
     val id: String,
@@ -146,15 +179,6 @@ fun HomeScreen(
                         }
 
                         item {
-                            HomeSearchBar(
-                                value = searchText,
-                                onValueChange = { searchText = it },
-                                isDarkMode = isDarkMode,
-                                onFilterClick = onFilterClick
-                            )
-                        }
-
-                        item {
                             HomeTabs(isDarkMode = isDarkMode)
                         }
 
@@ -194,21 +218,16 @@ fun HomeScreen(
                 }
 
                 BottomNavItem.Search -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Pantalla Buscar", color = MaterialTheme.colorScheme.onBackground)
-                    }
+                    SearchSection(
+                        items = items,
+                        isDarkMode = isDarkMode,
+                        onItemClick = onItemClick,
+                        onFilterClick = onFilterClick
+                    )
                 }
 
                 BottomNavItem.Notifications -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Notificaciones", color = MaterialTheme.colorScheme.onBackground)
-                    }
+                    NotificationsSection(isDarkMode = isDarkMode)
                 }
             }
         }
@@ -221,6 +240,284 @@ fun HomeScreen(
                 selectedItem = selectedItem,
                 onItemSelected = { selectedItem = it },
                 modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+@Composable
+fun SearchSection(
+    items: List<LostItem>,
+    isDarkMode: Boolean,
+    onItemClick: (String) -> Unit,
+    onFilterClick: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+
+    val filteredItems = remember(query, items) {
+        if (query.isEmpty()) {
+            items
+        } else {
+            items.filter {
+                it.title.contains(query, ignoreCase = true) ||
+                it.location.contains(query, ignoreCase = true) ||
+                it.brand.contains(query, ignoreCase = true)
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = "Buscar objetos",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        HomeSearchBar(
+            value = query,
+            onValueChange = { query = it },
+            isDarkMode = isDarkMode,
+            onFilterClick = onFilterClick
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (filteredItems.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No se encontraron objetos",
+                    color = WayTextMuted,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(filteredItems) { item ->
+                    ObjectCard(
+                        item = item,
+                        isDarkMode = isDarkMode,
+                        onClick = { onItemClick(item.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NotificationsSection(isDarkMode: Boolean) {
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val notifications = listOf(
+        NotificationItem(
+            "¡Coincidencia encontrada!",
+            "Tu publicación \"Mochila negra\" tiene una posible coincidencia.",
+            "Hace 5 min",
+            Icons.Outlined.NotificationsActive,
+            WayGreen,
+            WayGreenSoft,
+            false
+        ),
+        NotificationItem(
+            "Nuevo mensaje",
+            "Juan te envió un mensaje sobre \"Termo azul marino\".",
+            "Hace 1 h",
+            Icons.AutoMirrored.Outlined.Chat,
+            WayPurple,
+            WayPurpleSoft,
+            false
+        ),
+        NotificationItem(
+            "Actualización",
+            "Tu publicación \"Paraguas negro\" fue marcada como finalizada.",
+            "Ayer",
+            Icons.Outlined.CheckCircle,
+            Color(0xFF3B82F6),
+            Color(0xFFEFF6FF),
+            true
+        ),
+        NotificationItem(
+            "Recordatorio",
+            "Tu publicación \"Libreta con espiral\" lleva 7 días activa.",
+            "2 may",
+            Icons.Outlined.Notifications,
+            Color(0xFFF59E0B),
+            Color(0xFFFFFBEB),
+            true
+        ),
+        NotificationItem(
+            "¡Encontrado!",
+            "Alguien ha reportado un objeto similar a tus \"Llaves de carro\".",
+            "3 may",
+            Icons.Outlined.NotificationsActive,
+            WayGreen,
+            WayGreenSoft,
+            true
+        )
+    )
+
+    val filteredNotifications = if (selectedTab == 0) {
+        notifications
+    } else {
+        notifications.filter { !it.isRead }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = "Notificaciones",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            NotificationTabItem(
+                text = "Todas",
+                selected = selectedTab == 0,
+                modifier = Modifier.weight(1f),
+                onClick = { selectedTab = 0 }
+            )
+            NotificationTabItem(
+                text = "No leídas",
+                selected = selectedTab == 1,
+                modifier = Modifier.weight(1f),
+                onClick = { selectedTab = 1 }
+            )
+        }
+
+        HorizontalDivider(color = WayBorder.copy(alpha = 0.5f))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            items(filteredNotifications) { notification ->
+                NotificationRow(notification, isDarkMode)
+                HorizontalDivider(
+                    color = WayBorder.copy(alpha = 0.3f)
+                )
+            }
+        }
+    }
+}
+
+data class NotificationItem(
+    val title: String,
+    val description: String,
+    val time: String,
+    val icon: ImageVector,
+    val iconColor: Color,
+    val iconBackground: Color,
+    val isRead: Boolean = false
+)
+
+@Composable
+fun NotificationTabItem(
+    text: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = text,
+            fontSize = 15.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) WayPurple else WayTextMuted,
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(3.dp)
+                    .clip(CircleShape)
+                    .background(WayPurple)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(3.dp))
+        }
+    }
+}
+
+@Composable
+fun NotificationRow(notification: NotificationItem, isDarkMode: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (!notification.isRead && !isDarkMode) WayPurple.copy(alpha = 0.03f) else Color.Transparent)
+            .clickable { /* Ver detalle */ }
+            .padding(vertical = 20.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(if (isDarkMode) notification.iconColor.copy(alpha = 0.15f) else notification.iconBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = notification.icon,
+                contentDescription = null,
+                tint = notification.iconColor,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = notification.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = notification.time,
+                    fontSize = 11.sp,
+                    color = WayTextMuted
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = notification.description,
+                fontSize = 13.sp,
+                color = WayTextSecondary,
+                lineHeight = 18.sp
             )
         }
     }

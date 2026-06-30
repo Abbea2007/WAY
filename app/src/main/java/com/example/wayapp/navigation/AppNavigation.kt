@@ -85,9 +85,6 @@ fun AppNavigation(
                 onMyMessagesClick = {
                     navController.navigate("my_messages")
                 },
-                onNotificationsClick = {
-                    navController.navigate("notifications")
-                },
                 userViewModel = userProfileViewModel
             )
         }
@@ -115,13 +112,6 @@ fun AppNavigation(
             val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
             ChatDetailScreen(
                 chatId = chatId,
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        composable("notifications") {
-            NotificationsScreen(
                 onBack = {
                     navController.popBackStack()
                 }

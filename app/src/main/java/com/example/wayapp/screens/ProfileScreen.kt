@@ -35,7 +35,6 @@ fun ProfileScreen(
     onBack: () -> Unit = {},
     onMyPublicationsClick: () -> Unit = {},
     onMyMessagesClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
     userViewModel: UserProfileViewModel = viewModel()
 ) {
     var isEditing by remember { mutableStateOf(false) }
@@ -220,11 +219,6 @@ fun ProfileScreen(
                 ProfileMenuItem(
                     icon = Icons.Outlined.BookmarkBorder,
                     text = "Objetos guardados"
-                )
-                ProfileMenuItem(
-                    icon = Icons.Outlined.Notifications,
-                    text = "Notificaciones",
-                    onClick = onNotificationsClick
                 )
                 ProfileMenuItem(
                     icon = Icons.Outlined.LocationOn,
