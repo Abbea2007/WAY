@@ -753,7 +753,7 @@ fun CategoriesSection(isDarkMode: Boolean) {
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             item { CategoryItem("Tecnología", Icons.Outlined.Devices, isDarkMode) }
-            item { CategoryItem("Mochilas", Icons.Outlined.ShoppingBag, isDarkMode) }
+            item { CategoryItem("Utiles", Icons.Outlined.ShoppingBag, isDarkMode) }
             item { CategoryItem("Llaves", Icons.Outlined.Key, isDarkMode) }
             item { CategoryItem("Documentos", Icons.Outlined.Description, isDarkMode) }
             item { CategoryItem("Ropa", Icons.Outlined.Checkroom, isDarkMode) }
@@ -821,13 +821,13 @@ fun LocationsSection(isDarkMode: Boolean) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LocationPill("Biblioteca Central", isDarkMode)
-                LocationPill("Cafetería Central", isDarkMode)
+                LocationPill("Biblioteca", isDarkMode)
+                LocationPill("Food", isDarkMode)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 LocationPill("Edificio A", isDarkMode)
-                LocationPill("Gimnasio", isDarkMode)
-                LocationPill("Estacionamiento B", isDarkMode)
+                LocationPill("Jaguar Centar", isDarkMode)
+                LocationPill("Edificio B", isDarkMode)
             }
         }
     }
