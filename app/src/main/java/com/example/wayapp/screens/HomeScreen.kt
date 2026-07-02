@@ -149,7 +149,25 @@ fun HomeScreen(
 
     var searchText by remember { mutableStateOf("") }
     var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedLocation by remember { mutableStateOf<String?>(null) }
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Todos, 1: Pérdidos, 2: Encontrados
+
     val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
+
+    // 3. Filtrar los objetos basados en los estados
+    val filteredItems = remember(items, selectedCategory, selectedLocation, selectedTab) {
+        items.filter { item ->
+            val categoryMatch = selectedCategory == null || item.brand == selectedCategory
+            val locationMatch = selectedLocation == null || item.location == selectedLocation
+            val tabMatch = when (selectedTab) {
+                1 -> !item.isFound
+                2 -> item.isFound
+                else -> true
+            }
+            categoryMatch && locationMatch && tabMatch
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -179,22 +197,38 @@ fun HomeScreen(
                         }
 
                         item {
-                            HomeTabs(isDarkMode = isDarkMode)
+                            HomeTabs(
+                                isDarkMode = isDarkMode,
+                                selectedTab = selectedTab,
+                                onTabSelected = { selectedTab = it }
+                            )
                         }
 
                         item {
-                            CategoriesSection(isDarkMode = isDarkMode)
+                            CategoriesSection(
+                                isDarkMode = isDarkMode,
+                                selectedCategory = selectedCategory,
+                                onCategorySelected = {
+                                    selectedCategory = if (selectedCategory == it) null else it
+                                }
+                            )
                         }
 
                         item {
-                            LocationsSection(isDarkMode = isDarkMode)
+                            LocationsSection(
+                                isDarkMode = isDarkMode,
+                                selectedLocation = selectedLocation,
+                                onLocationSelected = {
+                                    selectedLocation = if (selectedLocation == it) null else it
+                                }
+                            )
                         }
 
                         item {
                             SectionHeader()
                         }
 
-                        items(items) { item ->
+                        items(filteredItems) { item ->
                             ObjectCard(
                                 item = item,
                                 isDarkMode = isDarkMode,
@@ -678,7 +712,11 @@ fun HomeSearchBar(
 }
 
 @Composable
-fun HomeTabs(isDarkMode: Boolean) {
+fun HomeTabs(
+    isDarkMode: Boolean,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -697,9 +735,9 @@ fun HomeTabs(isDarkMode: Boolean) {
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TabPill("Todos", active = true, modifier = Modifier.weight(1f))
-        TabPill("Pérdidos", active = false, modifier = Modifier.weight(1f))
-        TabPill("Encontrados", active = false, modifier = Modifier.weight(1f))
+        TabPill("Todos", active = selectedTab == 0, modifier = Modifier.weight(1f), onClick = { onTabSelected(0) })
+        TabPill("Pérdidos", active = selectedTab == 1, modifier = Modifier.weight(1f), onClick = { onTabSelected(1) })
+        TabPill("Encontrados", active = selectedTab == 2, modifier = Modifier.weight(1f), onClick = { onTabSelected(2) })
     }
 }
 
@@ -707,13 +745,15 @@ fun HomeTabs(isDarkMode: Boolean) {
 fun TabPill(
     text: String,
     active: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(20.dp))
-            .background(if (active) WayPurple else Color.Transparent),
+            .background(if (active) WayPurple else Color.Transparent)
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -726,7 +766,11 @@ fun TabPill(
 }
 
 @Composable
-fun CategoriesSection(isDarkMode: Boolean) {
+fun CategoriesSection(
+    isDarkMode: Boolean,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -752,17 +796,24 @@ fun CategoriesSection(isDarkMode: Boolean) {
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
-            item { CategoryItem("Tecnología", Icons.Outlined.Devices, isDarkMode) }
-            item { CategoryItem("Utiles", Icons.Outlined.ShoppingBag, isDarkMode) }
-            item { CategoryItem("Llaves", Icons.Outlined.Key, isDarkMode) }
-            item { CategoryItem("Documentos", Icons.Outlined.Description, isDarkMode) }
-            item { CategoryItem("Ropa", Icons.Outlined.Checkroom, isDarkMode) }
+            item { CategoryItem("Ropa", Icons.Outlined.Checkroom, isDarkMode, selectedCategory == "Ropa") { onCategorySelected("Ropa") } }
+            item { CategoryItem("Llaves", Icons.Outlined.Key, isDarkMode, selectedCategory == "Llaves") { onCategorySelected("Llaves") } }
+            item { CategoryItem("Cartera", Icons.Outlined.ShoppingBag, isDarkMode, selectedCategory == "Cartera") { onCategorySelected("Cartera") } }
+            item { CategoryItem("Útiles", Icons.Outlined.Description, isDarkMode, selectedCategory == "Útiles") { onCategorySelected("Útiles") } }
+            item { CategoryItem("Electrónica", Icons.Outlined.Devices, isDarkMode, selectedCategory == "Electrónica") { onCategorySelected("Electrónica") } }
+            item { CategoryItem("Otros", Icons.Outlined.Tune, isDarkMode, selectedCategory == "Otros") { onCategorySelected("Otros") } }
         }
     }
 }
 
 @Composable
-fun CategoryItem(name: String, icon: ImageVector, isDarkMode: Boolean) {
+fun CategoryItem(
+    name: String,
+    icon: ImageVector,
+    isDarkMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -771,33 +822,37 @@ fun CategoryItem(name: String, icon: ImageVector, isDarkMode: Boolean) {
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(if (selected) WayPurple.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
                 .border(
-                    width = 1.dp,
-                    color = if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder,
+                    width = if (selected) 2.dp else 1.dp,
+                    color = if (selected) WayPurple else if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder,
                     shape = CircleShape
                 )
-                .clickable { },
+                .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = name,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = if (selected) WayPurple else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
         }
         Text(
             text = name,
-            color = WayTextSecondary,
+            color = if (selected) WayPurple else WayTextSecondary,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
 
 @Composable
-fun LocationsSection(isDarkMode: Boolean) {
+fun LocationsSection(
+    isDarkMode: Boolean,
+    selectedLocation: String?,
+    onLocationSelected: (String) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -821,35 +876,40 @@ fun LocationsSection(isDarkMode: Boolean) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LocationPill("Biblioteca", isDarkMode)
-                LocationPill("Food", isDarkMode)
+                LocationPill("Biblioteca", isDarkMode, selectedLocation == "Biblioteca") { onLocationSelected("Biblioteca") }
+                LocationPill("Food", isDarkMode, selectedLocation == "Food") { onLocationSelected("Food") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LocationPill("Edificio A", isDarkMode)
-                LocationPill("Jaguar Centar", isDarkMode)
-                LocationPill("Edificio B", isDarkMode)
+                LocationPill("Edificio A", isDarkMode, selectedLocation == "Edificio A") { onLocationSelected("Edificio A") }
+                LocationPill("Jaguar Centar", isDarkMode, selectedLocation == "Jaguar Centar") { onLocationSelected("Jaguar Centar") }
+                LocationPill("Edificio B", isDarkMode, selectedLocation == "Edificio B") { onLocationSelected("Edificio B") }
             }
         }
     }
 }
 
 @Composable
-fun LocationPill(name: String, isDarkMode: Boolean) {
+fun LocationPill(
+    name: String,
+    isDarkMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     Surface(
-        modifier = Modifier.clickable { },
+        modifier = Modifier.clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = if (selected) WayPurple.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
-            width = 1.dp,
-            color = if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) WayPurple else if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder
         )
     ) {
         Text(
             text = name,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             fontSize = 13.sp,
-            color = WayTextSecondary,
-            fontWeight = FontWeight.Medium
+            color = if (selected) WayPurple else WayTextSecondary,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
