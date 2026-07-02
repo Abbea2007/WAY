@@ -1,13 +1,19 @@
 package com.example.wayapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.wayapp.auth.AuthManager
 import com.example.wayapp.screens.*
 import com.example.wayapp.ui.theme.ThemeMode
 import com.example.wayapp.viewmodel.UserProfileViewModel
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 // ENRUTADOR PRINCIPAL: Centraliza la navegación y el flujo de pantallas de la aplicación.
 @Composable
@@ -17,6 +23,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val userProfileViewModel: UserProfileViewModel = viewModel()
+    val authManager = remember { AuthManager() }
 
     NavHost(
         navController = navController,
@@ -35,6 +42,9 @@ fun AppNavigation(
         composable("auth") {
             AuthScreen(
                 onLoginSuccess = {
+                    // Forzamos la recarga de los datos del usuario que acaba de iniciar sesión
+                    userProfileViewModel.cargarUsuario()
+
                     navController.navigate("home") {
                         popUpTo("auth") { inclusive = true }
                     }
@@ -63,7 +73,11 @@ fun AppNavigation(
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
             ItemDetailScreen(
                 itemId = itemId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onContactClick = { otherUserId, otherUserName ->
+                    val nombreCodificado = URLEncoder.encode(otherUserName, "UTF-8")
+                    navController.navigate("chat_detail/$otherUserId/$nombreCodificado")
+                }
             )
         }
 
@@ -85,6 +99,13 @@ fun AppNavigation(
                 onMyMessagesClick = {
                     navController.navigate("my_messages")
                 },
+                onLogoutClick = {
+                    authManager.cerrarSesion()
+                    userProfileViewModel.limpiarUsuario()
+                    navController.navigate("auth") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                },
                 userViewModel = userProfileViewModel
             )
         }
@@ -102,19 +123,31 @@ fun AppNavigation(
                 onBack = {
                     navController.popBackStack()
                 },
-                onChatClick = { chatId ->
-                    navController.navigate("chat_detail/$chatId")
+                onChatClick = { otherUserId, otherUserName ->
+                    val nombreCodificado = URLEncoder.encode(otherUserName, "UTF-8")
+                    navController.navigate("chat_detail/$otherUserId/$nombreCodificado")
                 }
             )
         }
 
-        composable("chat_detail/{chatId}") { backStackEntry ->
-            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+        composable(
+            route = "chat_detail/{otherUserId}/{otherUserName}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("otherUserName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
+            val otherUserNameCodificado = backStackEntry.arguments?.getString("otherUserName") ?: ""
+            val otherUserName = URLDecoder.decode(otherUserNameCodificado, "UTF-8")
+
             ChatDetailScreen(
-                chatId = chatId,
+                otherUserId = otherUserId,
+                otherUserName = otherUserName,
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                userViewModel = userProfileViewModel
             )
         }
     }

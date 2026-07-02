@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,9 +36,11 @@ fun ProfileScreen(
     onBack: () -> Unit = {},
     onMyPublicationsClick: () -> Unit = {},
     onMyMessagesClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {},
     userViewModel: UserProfileViewModel = viewModel()
 ) {
     var isEditing by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // User data state from ViewModel
     var nameEdit by remember { mutableStateOf(userViewModel.name) }
@@ -233,9 +236,43 @@ fun ProfileScreen(
                     text = "Acerca de WAY"
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(color = WayBorder.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Botón de Cerrar sesión (separado visualmente, en rojo)
+                ProfileMenuItem(
+                    icon = Icons.AutoMirrored.Outlined.Logout,
+                    text = "Cerrar sesión",
+                    tint = Color(0xFFE53935),
+                    onClick = { showLogoutDialog = true }
+                )
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+
+    // Diálogo de confirmación antes de cerrar sesión
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar sesión") },
+            text = { Text("¿Seguro que quieres cerrar sesión?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    onLogoutClick()
+                }) {
+                    Text("Cerrar sesión", color = Color(0xFFE53935))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
@@ -260,6 +297,7 @@ fun StatItem(number: String, label: String) {
 fun ProfileMenuItem(
     icon: ImageVector,
     text: String,
+    tint: Color? = null,
     onClick: () -> Unit = {}
 ) {
     Row(
@@ -272,7 +310,7 @@ fun ProfileMenuItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onBackground,
+            tint = tint ?: MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -280,7 +318,7 @@ fun ProfileMenuItem(
             text = text,
             modifier = Modifier.weight(1f),
             fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = tint ?: MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Medium
         )
         Icon(

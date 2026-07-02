@@ -13,9 +13,7 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,14 +25,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wayapp.R
+import com.example.wayapp.data.FirestoreManager
 import com.example.wayapp.ui.theme.*
 import com.example.wayapp.viewmodel.HomeViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ItemDetailScreen(
     itemId: String,
     onBack: () -> Unit = {},
-    viewModel: HomeViewModel = viewModel() // Inyectamos el ViewModel
+    onContactClick: (otherUserId: String, otherUserName: String) -> Unit = { _, _ -> },
+    viewModel: HomeViewModel = viewModel()
 ) {
     // 1. Observamos el objeto específico desde la base de datos
     val objeto by viewModel.obtenerObjetoPorId(itemId).collectAsState(initial = null)
@@ -45,6 +46,21 @@ fun ItemDetailScreen(
             CircularProgressIndicator(color = WayPurple)
         }
         return // Pausamos la ejecución del diseño hasta que el objeto cargue
+    }
+
+    val firestoreManager = remember { FirestoreManager() }
+    val currentUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    val esMiPropiaPublicacion = objeto!!.idUsuarioReporta.isNotBlank() && objeto!!.idUsuarioReporta == currentUid
+
+    // Nombre del dueño de la publicación (se busca en Firestore una sola vez que carga el objeto)
+    var nombreDueno by remember { mutableStateOf("Usuario") }
+    LaunchedEffect(objeto!!.idUsuarioReporta) {
+        val uidDueno = objeto!!.idUsuarioReporta
+        if (uidDueno.isNotBlank()) {
+            firestoreManager.obtenerUsuario(uidDueno) { usuario ->
+                nombreDueno = usuario?.nombre?.ifBlank { "Usuario" } ?: "Usuario"
+            }
+        }
     }
 
     // 3. Mapeamos el dato real a tu modelo visual (LostItem)
@@ -198,7 +214,7 @@ fun ItemDetailScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Ubicación registrada", // Quitamos el condicional quemado
+                            text = "Ubicación registrada",
                             fontSize = 13.sp,
                             color = WayTextSecondary
                         )
@@ -250,10 +266,22 @@ fun ItemDetailScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(24.dp)
         ) {
-            PrimaryAuthButton(
-                text = "Tengo más información",
-                onClick = { /* Acción */ }
-            )
+            if (esMiPropiaPublicacion) {
+                PrimaryAuthButton(
+                    text = "Esta es tu publicación",
+                    onClick = { }
+                )
+            } else {
+                PrimaryAuthButton(
+                    text = "Tengo más información",
+                    onClick = {
+                        val uidDueno = objeto!!.idUsuarioReporta
+                        if (uidDueno.isNotBlank()) {
+                            onContactClick(uidDueno, nombreDueno)
+                        }
+                    }
+                )
+            }
         }
     }
 }

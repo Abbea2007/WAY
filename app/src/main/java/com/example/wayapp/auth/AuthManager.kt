@@ -1,11 +1,17 @@
 package com.example.wayapp.auth
 
+import com.example.wayapp.data.FirestoreManager
+import com.example.wayapp.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
+
 //AppWAYAPP original
 class AuthManager {
 
     // Instancia de Firebase Auth
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
+    // Instancia de FirestoreManager para guardar los datos del usuario
+    private val firestoreManager = FirestoreManager()
 
     //Función para registrar un nuevo usuario en la app WAY
     fun registrarUsuario(fullName: String, correo: String, contrasena: String, onResult: (Boolean, String?) -> Unit) {
@@ -22,14 +28,27 @@ class AuthManager {
             return
         }
 
-
-
         // 3. Registrar en Firebase
         auth.createUserWithEmailAndPassword(correo, contrasena)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
 
-                    // 3. Enviar correo de verificación
+                    val uid = auth.currentUser?.uid
+
+                    // 4. Guardar el nombre del usuario en Firestore (colección "Usuarios")
+                    if (uid != null) {
+                        val nuevoUsuario = Usuario(
+                            uid = uid,
+                            nombre = fullName,
+                            correo = correo
+                        )
+                        firestoreManager.guardarUsuario(nuevoUsuario) { _, _ ->
+                            // No bloqueamos el flujo de registro si esto falla;
+                            // el nombre se puede volver a guardar después desde el perfil.
+                        }
+                    }
+
+                    // 5. Enviar correo de verificación
                     auth.currentUser?.sendEmailVerification()
                         ?.addOnCompleteListener { emailTask ->
                             if (emailTask.isSuccessful) {
@@ -76,5 +95,10 @@ class AuthManager {
                     onResult(false, "Credenciales incorrectas")
                 }
             }
+    }
+
+    //Función para cerrar la sesión del usuario actual
+    fun cerrarSesion() {
+        auth.signOut()
     }
 }
