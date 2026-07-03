@@ -1,166 +1,683 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.screens
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wayapp.R
-import com.example.wayapp.ui.theme.*
+import com.example.wayapp.data.FirestoreManager
+import com.example.wayapp.model.ObjetoReportado
+import com.example.wayapp.settings.SettingsScreen
+import com.example.wayapp.ui.theme.ThemeMode
+import com.example.wayapp.ui.theme.WayBorder
+import com.example.wayapp.ui.theme.WayDarkBackground
+import com.example.wayapp.ui.theme.WayGreen
+import com.example.wayapp.ui.theme.WayGreenSoft
+import com.example.wayapp.ui.theme.WayPurple
+import com.example.wayapp.ui.theme.WayPurpleSoft
+import com.example.wayapp.ui.theme.WayRed
+import com.example.wayapp.ui.theme.WayTextMuted
+import com.example.wayapp.ui.theme.WayTextSecondary
+import com.example.wayapp.ui.theme.WayWhite
+import com.example.wayapp.viewmodel.HomeViewModel
+import com.example.wayapp.viewmodel.UserProfileViewModel
 
 data class LostItem(
+    val id: String,
     val title: String,
     val status: String,
     val isFound: Boolean,
     val time: String,
     val location: String,
-    @DrawableRes val image: Int
+    @DrawableRes val image: Int,
+    val description: String = "",
+    val brand: String = ""
 )
 
+enum class BottomNavItem {
+    Home, Search, Notifications, Settings, Publish
+}
+
 @Composable
-fun HomeScreen() {
-    val items = listOf(
-        LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle17),
-        LostItem("Mochila Negra", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle18),
-        LostItem("Llaves de carro", "Pérdido", false, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle19),
-        LostItem("Termo para café", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle20),
-        LostItem("Audífonos inalámbricos", "Encontrado", true, "Hoy, 10:30 a.m.", "Biblioteca central", R.drawable.rectangle21)
-    )
+fun HomeScreen(
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+    onProfileClick: () -> Unit = {},
+    onFilterClick: () -> Unit = {},
+    onItemClick: (String) -> Unit = {},
+    viewModel: HomeViewModel = viewModel(),
+    userViewModel: UserProfileViewModel = viewModel()
+) {
+    // 1. Se instancia el backend y el contexto
+    val firestoreManager = remember { FirestoreManager() }
+    val context = LocalContext.current
+
+    // 1. Se observa la base de datos de Room en tiempo real
+    val objetosLocales by viewModel.objetosLocales.collectAsState(initial = emptyList<ObjetoReportado>())
+
+    // 2. Se convierte el modelo de datos (ObjetoReportado) al modelo de UI (LostItem)
+    val items = objetosLocales.map { objeto ->
+        LostItem(
+            id = objeto.id,
+            title = objeto.nombre,
+            status = if (objeto.estado == "PERDIDO") "Perdido" else "Encontrado",
+            isFound = objeto.estado != "PERDIDO",
+            time = objeto.fechaHora,
+            location = objeto.ubicacion,
+            image = R.drawable.imagen_lost_defauld,
+            description = objeto.descripcion,
+            brand = objeto.categoria
+        )
+    }
+
+    var searchText by remember { mutableStateOf("") }
+    var selectedItem by remember { mutableStateOf(BottomNavItem.Home) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedLocation by remember { mutableStateOf<String?>(null) }
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Todos, 1: Pérdidos, 2: Encontrados
+
+    val isDarkMode = MaterialTheme.colorScheme.background == WayDarkBackground
+
+    // 3. Filtrar los objetos basados en los estados
+    val filteredItems = remember(items, selectedCategory, selectedLocation, selectedTab) {
+        items.filter { item ->
+            val categoryMatch = selectedCategory == null || item.brand == selectedCategory
+            val locationMatch = selectedLocation == null || item.location == selectedLocation
+            val tabMatch = when (selectedTab) {
+                1 -> !item.isFound
+                2 -> item.isFound
+                else -> true
+            }
+            categoryMatch && locationMatch && tabMatch
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(WayBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
-                .padding(top = 72.dp, bottom = 104.dp)
+                .padding(top = 72.dp,
+                    bottom = if (selectedItem == BottomNavItem.Publish) 24.dp else 104.dp)
         ) {
-            HomeHeader()
+            when (selectedItem) {
+                BottomNavItem.Home -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        item {
+                            HomeHeader(
+                                isDarkMode = isDarkMode,
+                                onProfileClick = onProfileClick,
+                                userViewModel = userViewModel
+                            )
+                        }
 
-            Spacer(modifier = Modifier.height(18.dp))
-            HomeSearchBar()
+                        item {
+                            HomeTabs(
+                                isDarkMode = isDarkMode,
+                                selectedTab = selectedTab,
+                                onTabSelected = { selectedTab = it }
+                            )
+                        }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            HomeTabs()
+                        item {
+                            CategoriesSection(
+                                isDarkMode = isDarkMode,
+                                selectedCategory = selectedCategory,
+                                onCategorySelected = {
+                                    selectedCategory = if (selectedCategory == it) null else it
+                                }
+                            )
+                        }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            SectionHeader()
+                        item {
+                            LocationsSection(
+                                isDarkMode = isDarkMode,
+                                selectedLocation = selectedLocation,
+                                onLocationSelected = {
+                                    selectedLocation = if (selectedLocation == it) null else it
+                                }
+                            )
+                        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                        item {
+                            SectionHeader()
+                        }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(items) { item ->
-                    ObjectCard(item = item)
+                        items(filteredItems) { item ->
+                            ObjectCard(
+                                item = item,
+                                isDarkMode = isDarkMode,
+                                onClick = { onItemClick(item.id) }
+                            )
+                        }
+                    }
+                }
+
+                BottomNavItem.Publish -> {
+                    PublishScreen(
+                        onBack = { selectedItem = BottomNavItem.Home }
+                    )
+                }
+
+                BottomNavItem.Settings -> {
+                    SettingsScreen(
+                        selectedTheme = themeMode,
+                        onThemeChange = onThemeChange
+                    )
+                }
+
+                BottomNavItem.Search -> {
+                    SearchSection(
+                        items = items,
+                        isDarkMode = isDarkMode,
+                        onItemClick = onItemClick,
+                        onFilterClick = onFilterClick
+                    )
+                }
+
+                BottomNavItem.Notifications -> {
+                    NotificationsSection(isDarkMode = isDarkMode)
                 }
             }
         }
 
-        HomeBottomBar(
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+
+
+        // 2. MODIFICAMOS LA BARRA INFERIOR PARA MANDAR EL OBJETO
+        if (selectedItem != BottomNavItem.Publish) {
+            HomeBottomBar(
+                selectedItem = selectedItem,
+                onItemSelected = { selectedItem = it },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
 
 @Composable
-fun HomeHeader() {
+fun SearchSection(
+    items: List<LostItem>,
+    isDarkMode: Boolean,
+    onItemClick: (String) -> Unit,
+    onFilterClick: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+
+    val filteredItems = remember(query, items) {
+        if (query.isEmpty()) {
+            items
+        } else {
+            items.filter {
+                it.title.contains(query, ignoreCase = true) ||
+                it.location.contains(query, ignoreCase = true) ||
+                it.brand.contains(query, ignoreCase = true)
+            }
+        }
+    }
+
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
         Text(
-            text = "Hola, Abea 👋",
-            color = WayTextPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            text = "Buscar objetos",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        Text(
-            text = "¿Qué estás buscando hoy?",
-            color = WayTextSecondary,
-            fontSize = 14.sp
+        HomeSearchBar(
+            value = query,
+            onValueChange = { query = it },
+            isDarkMode = isDarkMode,
+            onFilterClick = onFilterClick
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (filteredItems.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No se encontraron objetos",
+                    color = WayTextMuted,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(filteredItems) { item ->
+                    ObjectCard(
+                        item = item,
+                        isDarkMode = isDarkMode,
+                        onClick = { onItemClick(item.id) }
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun HomeSearchBar() {
+fun NotificationsSection(isDarkMode: Boolean) {
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val notifications = listOf(
+        NotificationItem(
+            "¡Coincidencia encontrada!",
+            "Tu publicación \"Mochila negra\" tiene una posible coincidencia.",
+            "Hace 5 min",
+            Icons.Outlined.NotificationsActive,
+            WayGreen,
+            WayGreenSoft,
+            false
+        ),
+        NotificationItem(
+            "Nuevo mensaje",
+            "Juan te envió un mensaje sobre \"Termo azul marino\".",
+            "Hace 1 h",
+            Icons.AutoMirrored.Outlined.Chat,
+            WayPurple,
+            WayPurpleSoft,
+            false
+        ),
+        NotificationItem(
+            "Actualización",
+            "Tu publicación \"Paraguas negro\" fue marcada como finalizada.",
+            "Ayer",
+            Icons.Outlined.CheckCircle,
+            Color(0xFF3B82F6),
+            Color(0xFFEFF6FF),
+            true
+        ),
+        NotificationItem(
+            "Recordatorio",
+            "Tu publicación \"Libreta con espiral\" lleva 7 días activa.",
+            "2 may",
+            Icons.Outlined.Notifications,
+            Color(0xFFF59E0B),
+            Color(0xFFFFFBEB),
+            true
+        ),
+        NotificationItem(
+            "¡Encontrado!",
+            "Alguien ha reportado un objeto similar a tus \"Llaves de carro\".",
+            "3 may",
+            Icons.Outlined.NotificationsActive,
+            WayGreen,
+            WayGreenSoft,
+            true
+        )
+    )
+
+    val filteredNotifications = if (selectedTab == 0) {
+        notifications
+    } else {
+        notifications.filter { !it.isRead }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            text = "Notificaciones",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            NotificationTabItem(
+                text = "Todas",
+                selected = selectedTab == 0,
+                modifier = Modifier.weight(1f),
+                onClick = { selectedTab = 0 }
+            )
+            NotificationTabItem(
+                text = "No leídas",
+                selected = selectedTab == 1,
+                modifier = Modifier.weight(1f),
+                onClick = { selectedTab = 1 }
+            )
+        }
+
+        HorizontalDivider(color = WayBorder.copy(alpha = 0.5f))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            items(filteredNotifications) { notification ->
+                NotificationRow(notification, isDarkMode)
+                HorizontalDivider(
+                    color = WayBorder.copy(alpha = 0.3f)
+                )
+            }
+        }
+    }
+}
+
+data class NotificationItem(
+    val title: String,
+    val description: String,
+    val time: String,
+    val icon: ImageVector,
+    val iconColor: Color,
+    val iconBackground: Color,
+    val isRead: Boolean = false
+)
+
+@Composable
+fun NotificationTabItem(
+    text: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = text,
+            fontSize = 15.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) WayPurple else WayTextMuted,
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(3.dp)
+                    .clip(CircleShape)
+                    .background(WayPurple)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(3.dp))
+        }
+    }
+}
+
+@Composable
+fun NotificationRow(notification: NotificationItem, isDarkMode: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (!notification.isRead && !isDarkMode) WayPurple.copy(alpha = 0.03f) else Color.Transparent)
+            .clickable { /* Ver detalle */ }
+            .padding(vertical = 20.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(if (isDarkMode) notification.iconColor.copy(alpha = 0.15f) else notification.iconBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = notification.icon,
+                contentDescription = null,
+                tint = notification.iconColor,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = notification.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = notification.time,
+                    fontSize = 11.sp,
+                    color = WayTextMuted
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = notification.description,
+                fontSize = 13.sp,
+                color = WayTextSecondary,
+                lineHeight = 18.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeHeader(
+    onProfileClick: () -> Unit = {},
+    isDarkMode: Boolean,
+    onFilterClick: () -> Unit = {},
+    userViewModel: UserProfileViewModel
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Hola, ${userViewModel.name} 👋",
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "¿Qué estás buscando hoy?",
+                color = WayTextSecondary,
+                fontSize = 14.sp
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { onProfileClick() }
+        ) {
+            Image(
+                painter = painterResource(id = userViewModel.profilePhotoRes),
+                contentDescription = "Perfil",
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .border(
+                        width = 2.dp,
+                        color = if (isDarkMode)
+                            MaterialTheme.colorScheme.outline
+                        else
+                            WayWhite,
+                        shape = CircleShape
+                    ),
+
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    isDarkMode: Boolean,
+    onFilterClick: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = TextStyle(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 13.sp
+            ),
+            placeholder = {
+                Text(
+                    text = "Buscar objetos, categorías, lugares...",
+                    color = WayTextMuted,
+                    fontSize = 13.sp,
+                    maxLines = 1
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = null,
+                    tint = WayTextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+            },
             modifier = Modifier
                 .weight(1f)
-                .height(48.dp)
+                .height(52.dp)
                 .shadow(
                     elevation = 6.dp,
                     shape = RoundedCornerShape(14.dp),
                     ambientColor = Color.Black.copy(alpha = 0.08f),
                     spotColor = Color.Black.copy(alpha = 0.08f)
-                )
-                .clip(RoundedCornerShape(14.dp))
-                .background(WayWhite)
-                .border(
-                    BorderStroke(1.dp, WayBorder),
-                    RoundedCornerShape(14.dp)
-                )
-                .padding(horizontal = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Search,
-                contentDescription = null,
-                tint = WayTextMuted,
-                modifier = Modifier.size(20.dp)
+                ),
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = WayPurple,
+                unfocusedBorderColor = if (isDarkMode) {
+                    MaterialTheme.colorScheme.outline
+                } else {
+                    WayBorder
+                },
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                cursorColor = WayPurple
             )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Text(
-                text = "Buscar objetos, categorías, lugares...",
-                color = WayTextMuted,
-                fontSize = 13.sp,
-                maxLines = 1
-            )
-        }
+        )
 
         Box(
             modifier = Modifier
@@ -172,16 +689,21 @@ fun HomeSearchBar() {
                     spotColor = Color.Black.copy(alpha = 0.08f)
                 )
                 .clip(RoundedCornerShape(14.dp))
-                .background(WayWhite)
+                .background(MaterialTheme.colorScheme.surface)
                 .border(
-                    BorderStroke(1.dp, WayBorder),
-                    RoundedCornerShape(14.dp)
-                ),
+                    width = 1.dp,
+                    color = if (isDarkMode)
+                        MaterialTheme.colorScheme.outline
+                    else
+                        WayBorder,
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .clickable { onFilterClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Outlined.Tune,
-                contentDescription = null,
+                contentDescription = "Filtros",
                 tint = WayPurple,
                 modifier = Modifier.size(22.dp)
             )
@@ -190,19 +712,32 @@ fun HomeSearchBar() {
 }
 
 @Composable
-fun HomeTabs() {
+fun HomeTabs(
+    isDarkMode: Boolean,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (isDarkMode) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                } else Modifier
+            )
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        TabPill("Todos", active = true, modifier = Modifier.weight(1f))
-        TabPill("Pérdidos", active = false, modifier = Modifier.weight(1f))
-        TabPill("Encontrados", active = false, modifier = Modifier.weight(1f))
+        TabPill("Todos", active = selectedTab == 0, modifier = Modifier.weight(1f), onClick = { onTabSelected(0) })
+        TabPill("Pérdidos", active = selectedTab == 1, modifier = Modifier.weight(1f), onClick = { onTabSelected(1) })
+        TabPill("Encontrados", active = selectedTab == 2, modifier = Modifier.weight(1f), onClick = { onTabSelected(2) })
     }
 }
 
@@ -210,20 +745,171 @@ fun HomeTabs() {
 fun TabPill(
     text: String,
     active: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
             .fillMaxHeight()
             .clip(RoundedCornerShape(20.dp))
-            .background(if (active) WayPurple else Color.Transparent),
+            .background(if (active) WayPurple else Color.Transparent)
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = if (active) WayWhite else WayTextPrimary,
+            color = if (active) WayWhite else MaterialTheme.colorScheme.onSurface,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun CategoriesSection(
+    isDarkMode: Boolean,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Categorías",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Ver todas",
+                color = WayPurple,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { }
+            )
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            item { CategoryItem("Ropa", Icons.Outlined.Checkroom, isDarkMode, selectedCategory == "Ropa") { onCategorySelected("Ropa") } }
+            item { CategoryItem("Llaves", Icons.Outlined.Key, isDarkMode, selectedCategory == "Llaves") { onCategorySelected("Llaves") } }
+            item { CategoryItem("Cartera", Icons.Outlined.ShoppingBag, isDarkMode, selectedCategory == "Cartera") { onCategorySelected("Cartera") } }
+            item { CategoryItem("Útiles", Icons.Outlined.Description, isDarkMode, selectedCategory == "Útiles") { onCategorySelected("Útiles") } }
+            item { CategoryItem("Electrónica", Icons.Outlined.Devices, isDarkMode, selectedCategory == "Electrónica") { onCategorySelected("Electrónica") } }
+            item { CategoryItem("Otros", Icons.Outlined.Tune, isDarkMode, selectedCategory == "Otros") { onCategorySelected("Otros") } }
+        }
+    }
+}
+
+@Composable
+fun CategoryItem(
+    name: String,
+    icon: ImageVector,
+    isDarkMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(if (selected) WayPurple.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = if (selected) WayPurple else if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder,
+                    shape = CircleShape
+                )
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = name,
+                tint = if (selected) WayPurple else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Text(
+            text = name,
+            color = if (selected) WayPurple else WayTextSecondary,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun LocationsSection(
+    isDarkMode: Boolean,
+    selectedLocation: String?,
+    onLocationSelected: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Ubicaciones frecuentes",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Ver todas",
+                color = WayPurple,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { }
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LocationPill("Biblioteca", isDarkMode, selectedLocation == "Biblioteca") { onLocationSelected("Biblioteca") }
+                LocationPill("Food", isDarkMode, selectedLocation == "Food") { onLocationSelected("Food") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LocationPill("Edificio A", isDarkMode, selectedLocation == "Edificio A") { onLocationSelected("Edificio A") }
+                LocationPill("Jaguar Centar", isDarkMode, selectedLocation == "Jaguar Centar") { onLocationSelected("Jaguar Centar") }
+                LocationPill("Edificio B", isDarkMode, selectedLocation == "Edificio B") { onLocationSelected("Edificio B") }
+            }
+        }
+    }
+}
+
+@Composable
+fun LocationPill(
+    name: String,
+    isDarkMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) WayPurple.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) WayPurple else if (isDarkMode) MaterialTheme.colorScheme.outline else WayBorder
+        )
+    ) {
+        Text(
+            text = name,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            fontSize = 13.sp,
+            color = if (selected) WayPurple else WayTextSecondary,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
@@ -237,7 +923,7 @@ fun SectionHeader() {
     ) {
         Text(
             text = "Publicaciones Recientes",
-            color = WayTextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
@@ -252,7 +938,11 @@ fun SectionHeader() {
 }
 
 @Composable
-fun ObjectCard(item: LostItem) {
+fun ObjectCard(
+    item: LostItem,
+    isDarkMode: Boolean,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -264,7 +954,17 @@ fun ObjectCard(item: LostItem) {
                 spotColor = Color.Black.copy(alpha = 0.08f)
             )
             .clip(RoundedCornerShape(16.dp))
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (isDarkMode) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                } else Modifier
+            )
+            .clickable { onClick() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -285,7 +985,7 @@ fun ObjectCard(item: LostItem) {
         ) {
             Text(
                 text = item.title,
-                color = WayTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1
@@ -321,7 +1021,7 @@ fun ObjectCard(item: LostItem) {
                 Icon(
                     imageVector = Icons.Outlined.LocationOn,
                     contentDescription = null,
-                    tint = WayTextPrimary,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(15.dp)
                 )
 
@@ -340,7 +1040,7 @@ fun ObjectCard(item: LostItem) {
         Icon(
             imageVector = Icons.Outlined.BookmarkBorder,
             contentDescription = null,
-            tint = WayTextPrimary,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )
     }
@@ -348,13 +1048,29 @@ fun ObjectCard(item: LostItem) {
 
 @Composable
 fun HomeBottomBar(
+    selectedItem: BottomNavItem,
+    onItemSelected: (BottomNavItem) -> Unit,
+    onAddClick: () -> Unit = {}, // <-- 1. se agrego este parametro
     modifier: Modifier = Modifier
 ) {
+    val plusInteractionSource = remember { MutableInteractionSource() }
+    val plusPressed by plusInteractionSource.collectIsPressedAsState()
+
+    val plusScale by animateFloatAsState(
+        targetValue = if (plusPressed) 0.92f else 1f,
+        label = "plus_button_scale"
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(104.dp)
-            .background(WayWhite)
+            .background(MaterialTheme.colorScheme.surface)
+            .shadow(
+                elevation = 8.dp,
+                ambientColor = Color.Black.copy(alpha = 0.1f),
+                spotColor = Color.Black.copy(alpha = 0.1f)
+            )
             .padding(horizontal = 22.dp)
             .padding(bottom = 18.dp)
     ) {
@@ -365,20 +1081,19 @@ fun HomeBottomBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavItem("Home", Icons.Filled.Home, active = true)
-            NavItem("Buscar", Icons.Outlined.Search, active = false)
-
+            NavItem(label = "Home", icon = Icons.Filled.Home, active = selectedItem == BottomNavItem.Home, onClick = { onItemSelected(BottomNavItem.Home) })
+            NavItem(label = "Buscar", icon = Icons.Filled.Search, active = selectedItem == BottomNavItem.Search, onClick = { onItemSelected(BottomNavItem.Search) })
             Spacer(modifier = Modifier.width(76.dp))
-
-            NavItem("Notificaciones", Icons.Outlined.Notifications, active = false)
-            NavItem("Perfil", Icons.Outlined.Person, active = false)
+            NavItem(label = "Notificaciones", icon = Icons.Filled.Notifications, active = selectedItem == BottomNavItem.Notifications, onClick = { onItemSelected(BottomNavItem.Notifications) })
+            NavItem(label = "Configuración", icon = Icons.Filled.Settings, active = selectedItem == BottomNavItem.Settings, onClick = { onItemSelected(BottomNavItem.Settings) })
         }
 
         Box(
             modifier = Modifier
                 .size(64.dp)
                 .align(Alignment.Center)
-                .offset(y = (-8).dp)
+                .offset(y = (-5).dp)
+                .scale(plusScale)
                 .shadow(
                     elevation = 18.dp,
                     shape = CircleShape,
@@ -386,12 +1101,22 @@ fun HomeBottomBar(
                     spotColor = WayPurple.copy(alpha = 0.35f)
                 )
                 .clip(CircleShape)
-                .background(WayPurple),
+                .background(WayPurple)
+                .clickable(
+                    interactionSource = plusInteractionSource,
+                    indication = ripple(
+                        bounded = true,
+                        color = WayWhite.copy(alpha = 0.25f)
+                    ),
+                    onClick = {
+                        onItemSelected(BottomNavItem.Publish) // <-- 2. EJECUTAMOS LA ACCIÓN AQUÍ
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Rounded.Add,
-                contentDescription = null,
+                contentDescription = "Publicar",
                 tint = WayWhite,
                 modifier = Modifier.size(32.dp)
             )
@@ -403,12 +1128,31 @@ fun HomeBottomBar(
 fun NavItem(
     label: String,
     icon: ImageVector,
-    active: Boolean
+    active: Boolean,
+    onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        label = "nav_item_scale"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = Modifier.width(68.dp)
+        modifier = Modifier
+            .width(67.dp)
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(
+                    bounded = false,
+                    color = WayPurple.copy(alpha = 0.16f)
+                ),
+                onClick = onClick
+            )
     ) {
         Icon(
             imageVector = icon,
@@ -420,7 +1164,7 @@ fun NavItem(
         Text(
             text = label,
             color = if (active) WayPurple else WayTextMuted,
-            fontSize = 10.sp,
+            fontSize = 9.sp,
             maxLines = 1
         )
     }

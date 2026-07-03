@@ -1,5 +1,6 @@
-package com.example.wayapp.ui.screens
+package com.example.wayapp.screens
 
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,19 +25,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wayapp.ui.theme.*
 import com.example.wayapp.R
+import com.example.wayapp.auth.AuthManager
 
 @Composable
 fun AuthScreen(
     onLoginSuccess: () -> Unit = {}
 ) {
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var isLogin by remember { mutableStateOf(true) }
+
+    // 1. INSTANCIAMOS EL BACKEND AQUÍ
+    val authManager = remember { AuthManager() }
+
+    // 2. OBTENEMOS EL CONTEXTO PARA MOSTRAR MENSAJES (TOASTS)
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -77,6 +94,8 @@ fun AuthScreen(
 
             if (!isLogin) {
                 AuthInput(
+                    value = fullName,
+                    onValueChange = { fullName = it },
                     placeholder = "Nombre completo",
                     icon = { Icon(Icons.Outlined.Person, contentDescription = null) }
                 )
@@ -85,6 +104,8 @@ fun AuthScreen(
             }
 
             AuthInput(
+                value = email,
+                onValueChange = { email = it },
                 placeholder = "Correo electrónico",
                 icon = { Icon(Icons.Outlined.Email, contentDescription = null) }
             )
@@ -92,6 +113,8 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             AuthInput(
+                value = password,
+                onValueChange = { password = it },
                 placeholder = "Contraseña",
                 isPassword = true,
                 icon = { Icon(Icons.Outlined.Lock, contentDescription = null) }
@@ -101,6 +124,8 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AuthInput(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
                     placeholder = "Confirmar contraseña",
                     isPassword = true,
                     icon = { Icon(Icons.Outlined.Lock, contentDescription = null) }
@@ -120,9 +145,38 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // 3. AQUÍ CONECTAMOS EL BOTÓN CON TU LÓGICA DE FIREBASE
             PrimaryAuthButton(
                 text = if (isLogin) "Iniciar Sesión" else "Crear Cuenta",
-                onClick = onLoginSuccess
+                onClick = {
+                    if (isLogin) {
+                        // LÓGICA DE INICIO DE SESIÓN
+                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                            authManager.iniciarSesion(email, password) { exitoso, mensaje ->
+                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                                if (exitoso) {
+                                    onLoginSuccess() // Navega al HomePage si funcionó
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        // LÓGICA DE REGISTRO
+                        if (email.isNotEmpty() && password.isNotEmpty() && password == confirmPassword) {
+                            authManager.registrarUsuario(fullName,email, password) { exitoso, mensaje ->
+                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                                if (exitoso) {
+                                    isLogin = true // Si se registra bien, lo pasamos a la pantalla de login
+                                }
+                            }
+                        } else if (password != confirmPassword) {
+                            Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Por favor llena todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -226,51 +280,70 @@ fun AuthSwitchItem(
 
 @Composable
 fun AuthInput(
+    value: String,
+    onValueChange: (String) -> Unit,
     placeholder: String,
     isPassword: Boolean = false,
     icon: @Composable () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(WayWhite)
-            .border(
-                width = 1.dp,
-                color = WayBorder,
-                shape = RoundedCornerShape(14.dp)
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = TextStyle(
+            color = WayTextPrimary,
+            fontSize = 13.sp)
+        ,
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = WayTextMuted,
+                fontSize = 15.sp
             )
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(22.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        },
+        leadingIcon = {
             CompositionLocalProvider(LocalContentColor provides WayTextMuted) {
                 icon()
             }
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Text(
-            text = placeholder,
-            color = WayTextMuted,
-            fontSize = 15.sp,
-            modifier = Modifier.weight(1f)
+        },
+        trailingIcon = {
+            if (isPassword) {
+                IconButton(
+                    onClick = { passwordVisible = !passwordVisible }
+                ) {
+                    Icon(
+                        imageVector = if (passwordVisible)
+                            Icons.Outlined.VisibilityOff
+                        else
+                            Icons.Outlined.Visibility,
+                        contentDescription = if (passwordVisible)
+                            "Ocultar contraseña"
+                        else
+                            "Mostrar contraseña",
+                        tint = WayTextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        },
+        visualTransformation = if (isPassword && !passwordVisible)
+            PasswordVisualTransformation()
+        else
+            VisualTransformation.None,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = WayPurple,
+            unfocusedBorderColor = WayBorder,
+            focusedContainerColor = WayWhite,
+            unfocusedContainerColor = WayWhite,
+            cursorColor = WayPurple
         )
-
-        if (isPassword) {
-            Icon(
-                imageVector = Icons.Outlined.Visibility,
-                contentDescription = null,
-                tint = WayTextMuted,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
+    )
 }
 
 @Composable
